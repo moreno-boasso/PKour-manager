@@ -19,7 +19,7 @@ export function getRuntimeEnv() {
 
   return {
     apiBaseUrl: (env.PKOUR_API_BASE_URL ?? 'http://localhost:3000/api').trim(),
-    spotsApiBaseUrl: (env.PKOUR_SPOTS_API_BASE_URL ?? '').trim(),
+    spotsApiBaseUrl: (env.PKOUR_SPOTS_API_BASE_URL ?? 'http://localhost:3001/api').trim(),
     spotsListEndpoint: (env.PKOUR_SPOTS_LIST_ENDPOINT ?? '/spots/moderation').trim(),
     spotsModerateEndpoint: (env.PKOUR_SPOTS_MODERATE_ENDPOINT ?? '/spots/moderation').trim(),
     spotsDetailEndpoint: (env.PKOUR_SPOTS_DETAIL_ENDPOINT ?? '/spots/moderation').trim(),

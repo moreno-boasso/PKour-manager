@@ -8,7 +8,7 @@ const outputPath = path.join(projectRoot, 'public', 'env.js');
 
 const fallback = {
   PKOUR_API_BASE_URL: 'http://localhost:3000/api',
-  PKOUR_SPOTS_API_BASE_URL: '',
+  PKOUR_SPOTS_API_BASE_URL: 'http://localhost:3001/api',
   PKOUR_SPOTS_LIST_ENDPOINT: '/spots/moderation',
   PKOUR_SPOTS_MODERATE_ENDPOINT: '/spots/moderation',
   PKOUR_SPOTS_DETAIL_ENDPOINT: '/spots/moderation',
