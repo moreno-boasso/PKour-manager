@@ -1,0 +1,389 @@
+<div class="min-h-screen text-[var(--pk-text)]">
+  <div class="relative flex min-h-screen">
+    @if (isSidebarOpen) {
+      <button
+        type="button"
+        class="fixed inset-0 z-20 bg-black/60 md:hidden"
+        (click)="closeSidebarOnMobile()"
+        aria-label="Chiudi menu"
+      ></button>
+    }
+
+    <aside
+      class="fixed left-0 top-0 z-30 h-screen w-72 border-r border-[var(--pk-border)] bg-[var(--pk-bg-2)] p-5 shadow-[0_0_20px_var(--pk-glow)] transition-transform md:static md:translate-x-0"
+      [class.translate-x-0]="isSidebarOpen"
+      [class.-translate-x-full]="!isSidebarOpen"
+    >
+      <div class="mb-8 border-b border-[var(--pk-border)] pb-5">
+        <p class="font-['Space_Mono'] text-xs uppercase tracking-[0.2em] text-[var(--pk-accent-bright)]">
+          PKour Manager
+        </p>
+        <h1 class="font-['Bebas_Neue'] text-4xl tracking-[0.08em]">Manager</h1>
+      </div>
+
+      <nav class="space-y-2">
+        @for (item of menuItems; track item) {
+          <button
+            type="button"
+            class="w-full rounded-lg px-3 py-2 text-left text-sm transition"
+            [class.bg-[var(--pk-accent-dim)]]="item === 'Gestione Tricks'"
+            [class.text-white]="item === 'Gestione Tricks'"
+            [class.opacity-70]="item !== 'Gestione Tricks'"
+            [disabled]="item !== 'Gestione Tricks'"
+          >
+            {{ item }}
+          </button>
+        }
+      </nav>
+    </aside>
+
+    <main class="w-full flex-1 p-4 md:p-8">
+      <div class="mb-6 flex items-center justify-between border-b border-[var(--pk-border)] pb-4">
+        <div>
+          <p class="font-['Space_Mono'] text-xs uppercase tracking-[0.2em] text-[var(--pk-accent-bright)]">
+            Modulo attivo
+          </p>
+          <h2 class="text-2xl font-bold">Gestione Tricks</h2>
+        </div>
+        <button
+          type="button"
+          class="rounded-md border border-[var(--pk-border)] bg-[var(--pk-bg-2)] px-3 py-2 text-sm md:hidden"
+          (click)="toggleSidebar()"
+        >
+          Menu
+        </button>
+      </div>
+
+      @if (statusMessage) {
+        <div
+          class="mb-4 rounded-lg border px-4 py-3 text-sm"
+          [class.border-emerald-500]="statusType === 'success'"
+          [class.bg-emerald-950/40]="statusType === 'success'"
+          [class.text-emerald-300]="statusType === 'success'"
+          [class.border-red-500]="statusType === 'error'"
+          [class.bg-red-950/40]="statusType === 'error'"
+          [class.text-red-300]="statusType === 'error'"
+          [class.border-[var(--pk-accent)]]="statusType === 'info'"
+          [class.bg-[var(--pk-accent-dim)]/40]="statusType === 'info'"
+          [class.text-[var(--pk-accent-bright)]]="statusType === 'info'"
+        >
+          {{ statusMessage }}
+        </div>
+      }
+
+      <section class="rounded-xl border border-[var(--pk-border)] bg-[var(--pk-panel)] p-4 md:p-6">
+        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h3 class="font-['Space_Mono'] text-xs uppercase tracking-[0.15em] text-[var(--pk-accent-bright)]">
+            Lista Tricks
+          </h3>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="rounded-md border border-[var(--pk-border)] px-3 py-2 text-xs"
+              (click)="refreshTricks()"
+              [disabled]="isLoading"
+            >
+              {{ isLoading ? 'Carico...' : 'Aggiorna' }}
+            </button>
+            <button
+              type="button"
+              class="rounded-md bg-[var(--pk-accent)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--pk-accent-bright)]"
+              (click)="openCreateModal()"
+            >
+              + Crea Trick
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4 grid gap-3 md:grid-cols-2">
+          <input
+            type="text"
+            class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-2)] px-3 py-2 text-sm"
+            placeholder="Cerca per id, nome, tag..."
+            [(ngModel)]="searchText"
+            (ngModelChange)="applyFilters()"
+          />
+          <select
+            class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-2)] px-3 py-2 text-sm"
+            [(ngModel)]="selectedDifficulty"
+            (ngModelChange)="applyFilters()"
+          >
+            <option value="">Tutte le difficolta</option>
+            @for (diff of difficultyOptions; track diff) {
+              <option [value]="diff">{{ diff }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-4 flex flex-wrap gap-2 text-xs">
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--pk-border)] px-2 py-1">
+            <input type="checkbox" [(ngModel)]="filterOnlyIssues" (ngModelChange)="applyFilters()" />
+            Solo con problemi
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--pk-border)] px-2 py-1">
+            <input type="checkbox" [(ngModel)]="filterMissingThumbnail" (ngModelChange)="applyFilters()" />
+            Thumbnail KO (manca/rotta)
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--pk-border)] px-2 py-1">
+            <input type="checkbox" [(ngModel)]="filterMissingVideo" (ngModelChange)="applyFilters()" />
+            Manca video
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--pk-border)] px-2 py-1">
+            <input type="checkbox" [(ngModel)]="filterVideoNotPreviewable" (ngModelChange)="applyFilters()" />
+            Video non previewabile
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--pk-border)] px-2 py-1">
+            <input type="checkbox" [(ngModel)]="filterBrokenThumbnail" (ngModelChange)="applyFilters()" />
+            Solo thumbnail rotte
+          </label>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          @for (trick of filteredTricks; track trick.id) {
+            <button
+              type="button"
+              class="rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-2)]/70 p-3 text-left transition hover:border-[var(--pk-accent-bright)] hover:bg-[var(--pk-accent-dim)]/30"
+              (click)="openEditModal(trick)"
+            >
+              <div class="mb-2 flex flex-wrap items-center gap-2">
+                <span
+                  class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                  [class.border-emerald-500]="trick.quality.level === 'ok'"
+                  [class.text-emerald-300]="trick.quality.level === 'ok'"
+                  [class.border-amber-500]="trick.quality.level === 'warn'"
+                  [class.text-amber-300]="trick.quality.level === 'warn'"
+                  [class.border-red-500]="trick.quality.level === 'critical'"
+                  [class.text-red-300]="trick.quality.level === 'critical'"
+                >
+                  {{ trick.quality.level === 'ok' ? 'OK' : (trick.quality.level === 'warn' ? 'WARN' : 'CRIT') }}
+                </span>
+                @if (trick.quality.issues.length > 0) {
+                  <span class="rounded-full border border-[var(--pk-border)] px-2 py-0.5 text-[10px] text-[var(--pk-text-dim)]">
+                    {{ trick.quality.issues.length }} issue
+                  </span>
+                }
+              </div>
+              <p class="font-semibold">{{ trick.nome }}</p>
+              <p class="mt-1 text-xs text-[var(--pk-text-dim)]">{{ trick.id }} · {{ trick.difficolta }}</p>
+              <p class="mt-2 line-clamp-1 text-xs text-[var(--pk-text-dim)]">
+                {{ trick.tags.length > 0 ? trick.tags.join(', ') : 'Nessun tag' }}
+              </p>
+              @if (trick.quality.issues.length > 0) {
+                <p class="mt-2 line-clamp-2 text-xs text-amber-300">
+                  {{ issueLabel(trick.quality.issues[0]) }}{{ trick.quality.issues.length > 1 ? ' + altro' : '' }}
+                </p>
+              }
+            </button>
+          } @empty {
+            <p class="rounded-lg border border-dashed border-[var(--pk-border)] p-3 text-sm text-[var(--pk-text-dim)]">
+              Nessun trick trovato.
+            </p>
+          }
+        </div>
+      </section>
+
+      @if (isModalOpen) {
+        <div class="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/70 p-4 md:items-center">
+          <div class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-[var(--pk-border)] bg-[var(--pk-bg-2)] p-4 md:p-6">
+            <div class="mb-5 flex items-start justify-between gap-4 border-b border-[var(--pk-border)] pb-3">
+              <div>
+                <p class="font-['Space_Mono'] text-xs uppercase tracking-[0.2em] text-[var(--pk-accent-bright)]">
+                  {{ isCreateMode ? 'Creazione' : 'Modifica' }}
+                </p>
+                <h3 class="text-xl font-semibold">
+                  {{ isCreateMode ? 'Nuovo Trick' : 'Modifica Trick' }}
+                </h3>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                  <span
+                    class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                    [class.border-emerald-500]="draftQuality.level === 'ok'"
+                    [class.text-emerald-300]="draftQuality.level === 'ok'"
+                    [class.border-amber-500]="draftQuality.level === 'warn'"
+                    [class.text-amber-300]="draftQuality.level === 'warn'"
+                    [class.border-red-500]="draftQuality.level === 'critical'"
+                    [class.text-red-300]="draftQuality.level === 'critical'"
+                  >
+                    {{ draftQuality.level === 'ok' ? 'OK' : (draftQuality.level === 'warn' ? 'WARN' : 'CRIT') }}
+                  </span>
+                  @if (draftQuality.issues.length > 0) {
+                    <span class="text-xs text-[var(--pk-text-dim)]">
+                      {{ issueLabel(draftQuality.issues[0]) }}{{ draftQuality.issues.length > 1 ? ' + altro' : '' }}
+                    </span>
+                  }
+                </div>
+              </div>
+              <button
+                type="button"
+                class="rounded-md border border-[var(--pk-border)] px-2 py-1 text-xs"
+                (click)="closeModal()"
+              >
+                Chiudi
+              </button>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="space-y-1 text-sm">
+                <span class="text-[var(--pk-text-dim)]">ID *</span>
+                <input
+                  type="text"
+                  class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formId"
+                />
+              </label>
+
+              <label class="space-y-1 text-sm">
+                <span class="text-[var(--pk-text-dim)]">Nome *</span>
+                <input
+                  type="text"
+                  class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formNome"
+                />
+              </label>
+
+              <label class="space-y-1 text-sm">
+                <span class="text-[var(--pk-text-dim)]">Difficolta *</span>
+                <select
+                  class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formDifficolta"
+                >
+                  @for (diff of difficultyOptions; track diff) {
+                    <option [value]="diff">{{ diff }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="space-y-1 text-sm">
+                <span class="text-[var(--pk-text-dim)]">Video URL</span>
+                <input
+                  type="url"
+                  class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formVideoUrl"
+                />
+              </label>
+
+              <label class="space-y-1 text-sm md:col-span-2">
+                <span class="text-[var(--pk-text-dim)]">Thumbnail URL</span>
+                <input
+                  type="url"
+                  class="w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formThumbnailUrl"
+                />
+              </label>
+
+              <label class="space-y-1 text-sm md:col-span-2">
+                <span class="text-[var(--pk-text-dim)]">Tags (virgola o invio)</span>
+                <textarea
+                  class="min-h-24 w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formTags"
+                ></textarea>
+              </label>
+
+              <label class="space-y-1 text-sm md:col-span-2">
+                <span class="text-[var(--pk-text-dim)]">Required (virgola o invio)</span>
+                <textarea
+                  class="min-h-24 w-full rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-3 py-2"
+                  [(ngModel)]="formRequired"
+                ></textarea>
+              </label>
+            </div>
+
+            <div class="mt-5 rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)]/60 p-4">
+              <p class="mb-3 font-['Space_Mono'] text-xs uppercase tracking-[0.18em] text-[var(--pk-accent-bright)]">
+                Preview media
+              </p>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-2)] p-2">
+                  <p class="mb-2 text-xs text-[var(--pk-text-dim)]">Anteprima immagine</p>
+                  @if (thumbnailPreviewUrl) {
+                    <img
+                      [src]="thumbnailPreviewUrl"
+                      alt="Anteprima thumbnail trick"
+                      class="h-48 w-full rounded-md object-cover"
+                    />
+                  } @else {
+                    <div class="flex h-48 items-center justify-center rounded-md border border-dashed border-[var(--pk-border)] text-xs text-[var(--pk-text-dim)]">
+                      Thumbnail mancante o non valida
+                    </div>
+                  }
+                  @if (normalizedFormThumbnailUrl) {
+                    <a
+                      class="mt-2 inline-block text-xs text-[var(--pk-accent-bright)] underline"
+                      [href]="normalizedFormThumbnailUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Apri immagine originale
+                    </a>
+                  }
+                </div>
+
+                <div class="rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-2)] p-2">
+                  <p class="mb-2 text-xs text-[var(--pk-text-dim)]">Anteprima video YouTube</p>
+                  @if (youtubeEmbedPreviewUrl) {
+                    <iframe
+                      [src]="youtubeEmbedPreviewUrl"
+                      class="h-48 w-full rounded-md"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerpolicy="strict-origin-when-cross-origin"
+                      allowfullscreen
+                      title="Anteprima video YouTube"
+                    ></iframe>
+                  } @else {
+                    <div class="flex h-48 items-center justify-center rounded-md border border-dashed border-[var(--pk-border)] text-xs text-[var(--pk-text-dim)]">
+                      Video mancante o non previewabile (solo YouTube)
+                    </div>
+                  }
+                  @if (normalizedFormVideoUrl) {
+                    <a
+                      class="mt-2 inline-block text-xs text-[var(--pk-accent-bright)] underline"
+                      [href]="normalizedFormVideoUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Apri video originale
+                    </a>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-col gap-3 border-t border-[var(--pk-border)] pt-4 sm:flex-row sm:justify-between">
+              <div class="flex gap-2">
+                @if (!isCreateMode) {
+                  <button
+                    type="button"
+                    class="rounded-lg border border-red-600 bg-red-950/40 px-4 py-2 text-sm text-red-300 transition hover:bg-red-900/60 disabled:opacity-60"
+                    (click)="deleteCurrentTrick()"
+                    [disabled]="isSaving || isDeleting"
+                  >
+                    {{ isDeleting ? 'Eliminazione...' : 'Elimina trick' }}
+                  </button>
+                }
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg border border-[var(--pk-border)] bg-[var(--pk-bg-3)] px-4 py-2 text-sm"
+                  (click)="closeModal()"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg bg-[var(--pk-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--pk-accent-bright)] disabled:cursor-not-allowed disabled:opacity-50"
+                  [disabled]="isSaving || isDeleting"
+                  (click)="saveTrick()"
+                >
+                  {{ isSaving ? 'Salvataggio...' : (isCreateMode ? 'Crea trick' : 'Salva modifiche') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </main>
+  </div>
+</div>

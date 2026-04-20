@@ -1,0 +1,28 @@
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--pk-accent-bright);
+  box-shadow: 0 0 0 2px var(--pk-glow);
+}
+
+textarea {
+  resize: vertical;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pk-accent-dim);
+  border-radius: 999px;
+}

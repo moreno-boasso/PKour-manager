@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --pk-accent: #126869;
+  --pk-accent-bright: #1a9a9c;
+  --pk-accent-dim: #0d4f50;
+  --pk-bg: #080c0c;
+  --pk-bg-2: #0d1515;
+  --pk-bg-3: #111e1e;
+  --pk-panel: rgba(13, 21, 21, 0.86);
+  --pk-text: #e8f0f0;
+  --pk-text-dim: #7a9999;
+  --pk-border: rgba(18, 104, 105, 0.22);
+  --pk-glow: rgba(18, 104, 105, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at top, #102222 0%, var(--pk-bg) 35%);
+  color: var(--pk-text);
+}
