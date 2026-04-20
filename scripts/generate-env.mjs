@@ -8,10 +8,12 @@ const outputPath = path.join(projectRoot, 'public', 'env.js');
 
 const fallback = {
   PKOUR_API_BASE_URL: 'http://localhost:3000/api',
+  PKOUR_SPOTS_API_BASE_URL: '',
+  PKOUR_SPOTS_LIST_ENDPOINT: '/spots/moderation',
+  PKOUR_SPOTS_MODERATE_ENDPOINT: '/spots/moderation',
+  PKOUR_SPOTS_DETAIL_ENDPOINT: '/spots/moderation',
   PKOUR_TRICKS_WRITE_ENDPOINT: '/tricks/upsert-local',
   PKOUR_TRICKS_DELETE_ENDPOINT: '/tricks/delete-local',
-  LOCAL_TOOL_SECRET: '',
-  PKOUR_LOCAL_TOOL_SECRET: '',
 };
 
 let parsedEnv = {};
@@ -24,6 +26,10 @@ const runtimeEnv = {
   ...fallback,
   ...parsedEnv,
 };
+
+// Never expose local secrets to browser runtime.
+delete runtimeEnv.LOCAL_TOOL_SECRET;
+delete runtimeEnv.PKOUR_LOCAL_TOOL_SECRET;
 
 const envFileContent = `window.__PKOUR_ENV__ = ${JSON.stringify(runtimeEnv, null, 2)};\n`;
 

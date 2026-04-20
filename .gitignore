@@ -14,6 +14,7 @@
 
 # Environment files
 /.env
+/public/env.js
 
 # Angular CLI and build artefacts
 /.angular-cli.json
@@ -26,3 +27,4 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+public/env.js
