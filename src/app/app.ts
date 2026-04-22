@@ -31,7 +31,7 @@ interface DeleteTrickResponse {
   };
 }
 
-type ManagerModuleKey = 'spots' | 'tricks';
+type ManagerModuleKey = 'spots' | 'reviews' | 'reports' | 'tricks';
 
 interface MenuItem {
   key: ManagerModuleKey | 'photos' | 'reviews' | 'reports' | 'accounts';
@@ -151,6 +151,57 @@ interface SpotDetail {
   } | null;
 }
 
+type ReviewSortBy = 'created_at' | 'qualita' | 'sicurezza' | 'spot' | 'user';
+
+interface ModerationReview {
+  id: number;
+  spot_id: number;
+  spot_nome: string | null;
+  user_id: string | null;
+  user_nome: string | null;
+  user_username: string | null;
+  qualita: number | null;
+  sicurezza: number | null;
+  commento: string;
+  status: SpotStatus;
+  created_at: string | null;
+}
+
+interface ReviewsResponse {
+  pagination?: {
+    total?: number;
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
+  };
+  data: ModerationReview[];
+}
+
+type ReportSortBy = 'created_at' | 'motivo' | 'spot' | 'user';
+
+interface ModerationReport {
+  id: number;
+  spot_id: number;
+  spot_nome: string | null;
+  user_id: string | null;
+  user_nome: string | null;
+  user_username: string | null;
+  motivo: string | null;
+  descrizione: string;
+  status: SpotStatus;
+  created_at: string | null;
+}
+
+interface ReportsResponse {
+  pagination?: {
+    total?: number;
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
+  };
+  data: ModerationReport[];
+}
+
 type TrickIssueCode =
   | 'missing_name'
   | 'unknown_difficulty'
@@ -175,8 +226,8 @@ export class App implements OnInit {
   protected readonly menuItems: MenuItem[] = [
     { key: 'spots', label: 'Approvazione Spot', enabled: true },
     { key: 'photos', label: 'Approvazione Foto', enabled: false },
-    { key: 'reviews', label: 'Approvazione Recensioni', enabled: false },
-    { key: 'reports', label: 'Approvazione Segnalazioni', enabled: false },
+    { key: 'reviews', label: 'Approvazione Recensioni', enabled: true },
+    { key: 'reports', label: 'Approvazione Segnalazioni', enabled: true },
     { key: 'tricks', label: 'Gestione Tricks', enabled: true },
     { key: 'accounts', label: 'Gestione Account', enabled: false },
   ];
@@ -189,6 +240,10 @@ export class App implements OnInit {
   protected spotsListEndpoint = '';
   protected spotsModerateEndpoint = '';
   protected spotsDetailEndpoint = '';
+  protected reviewsListEndpoint = '';
+  protected reviewsModerateEndpoint = '';
+  protected reportsListEndpoint = '';
+  protected reportsModerateEndpoint = '';
   protected tricksWriteEndpoint = '';
   protected tricksDeleteEndpoint = '';
   protected localToolSecret = '';
@@ -218,6 +273,30 @@ export class App implements OnInit {
   protected selectedSpotDetail: SpotDetail | null = null;
   protected isSpotDetailOpen = false;
   protected isSpotDetailLoading = false;
+
+  protected reviewSearchText = '';
+  protected selectedReviewStatus: SpotStatus = 'pending';
+  protected selectedReviewSortBy: ReviewSortBy = 'created_at';
+  protected reviewsPage = 1;
+  protected reviewsPageSize = 12;
+  protected reviewsTotal = 0;
+  protected reviewsTotalPages = 1;
+  protected reviews: ModerationReview[] = [];
+  protected isReviewsLoading = false;
+  protected isReviewActionLoading = false;
+  protected reviewActionTargetId: number | null = null;
+
+  protected reportSearchText = '';
+  protected selectedReportStatus: SpotStatus = 'pending';
+  protected selectedReportSortBy: ReportSortBy = 'created_at';
+  protected reportsPage = 1;
+  protected reportsPageSize = 12;
+  protected reportsTotal = 0;
+  protected reportsTotalPages = 1;
+  protected reports: ModerationReport[] = [];
+  protected isReportsLoading = false;
+  protected isReportActionLoading = false;
+  protected reportActionTargetId: number | null = null;
 
   protected searchText = '';
   protected selectedDifficulty = '';
@@ -256,6 +335,10 @@ export class App implements OnInit {
     this.spotsListEndpoint = runtimeEnv.spotsListEndpoint;
     this.spotsModerateEndpoint = runtimeEnv.spotsModerateEndpoint;
     this.spotsDetailEndpoint = runtimeEnv.spotsDetailEndpoint;
+    this.reviewsListEndpoint = runtimeEnv.reviewsListEndpoint;
+    this.reviewsModerateEndpoint = runtimeEnv.reviewsModerateEndpoint;
+    this.reportsListEndpoint = runtimeEnv.reportsListEndpoint;
+    this.reportsModerateEndpoint = runtimeEnv.reportsModerateEndpoint;
     this.tricksWriteEndpoint = runtimeEnv.tricksWriteEndpoint;
     this.tricksDeleteEndpoint = runtimeEnv.tricksDeleteEndpoint;
     this.localToolSecret = runtimeEnv.localToolSecret;
@@ -271,7 +354,7 @@ export class App implements OnInit {
   }
 
   protected selectModule(item: MenuItem): void {
-    if (!item.enabled || (item.key !== 'spots' && item.key !== 'tricks')) {
+    if (!item.enabled || (item.key !== 'spots' && item.key !== 'reviews' && item.key !== 'reports' && item.key !== 'tricks')) {
       return;
     }
 
@@ -283,13 +366,32 @@ export class App implements OnInit {
       return;
     }
 
+    if (item.key === 'reviews') {
+      this.loadReviews();
+      return;
+    }
+
+    if (item.key === 'reports') {
+      this.loadReports();
+      return;
+    }
+
     if (!this.hasLoadedTricks) {
       this.loadTricks();
     }
   }
 
   protected get activeModuleTitle(): string {
-    return this.activeModule === 'spots' ? 'Approvazione Spot' : 'Gestione Tricks';
+    if (this.activeModule === 'spots') {
+      return 'Approvazione Spot';
+    }
+    if (this.activeModule === 'reviews') {
+      return 'Approvazione Recensioni';
+    }
+    if (this.activeModule === 'reports') {
+      return 'Approvazione Segnalazioni';
+    }
+    return 'Gestione Tricks';
   }
 
   protected get spotStatusLabel(): string {
@@ -298,6 +400,28 @@ export class App implements OnInit {
         return 'Approvati';
       case 'rejected':
         return 'Rifiutati';
+      default:
+        return 'In attesa';
+    }
+  }
+
+  protected get reviewStatusLabel(): string {
+    switch (this.selectedReviewStatus) {
+      case 'approved':
+        return 'Approvate';
+      case 'rejected':
+        return 'Rifiutate';
+      default:
+        return 'In attesa';
+    }
+  }
+
+  protected get reportStatusLabel(): string {
+    switch (this.selectedReportStatus) {
+      case 'approved':
+        return 'Approvate';
+      case 'rejected':
+        return 'Rifiutate';
       default:
         return 'In attesa';
     }
@@ -425,6 +549,198 @@ export class App implements OnInit {
           this.syncView();
         },
       });
+  }
+
+  protected refreshReviews(): void {
+    this.loadReviews();
+  }
+
+  protected searchReviews(): void {
+    this.reviewsPage = 1;
+    this.loadReviews();
+  }
+
+  protected goToReviewsPage(page: number): void {
+    if (page < 1 || page > this.reviewsTotalPages || page === this.reviewsPage) {
+      return;
+    }
+    this.reviewsPage = page;
+    this.loadReviews();
+  }
+
+  protected moderateReview(review: ModerationReview, status: Extract<SpotStatus, 'approved' | 'rejected'>): void {
+    if (this.isReviewActionLoading || this.reviewActionTargetId !== null) {
+      return;
+    }
+
+    this.isReviewActionLoading = true;
+    this.reviewActionTargetId = review.id;
+    this.setStatus(
+      status === 'approved'
+        ? `Approvo recensione #${review.id}...`
+        : `Rifiuto recensione #${review.id}...`,
+      'info',
+    );
+
+    this.http
+      .patch(
+        this.buildSpotsUrl(`${this.reviewsModerateEndpoint}/${review.id}/decision`),
+        { decision: status },
+        {
+          headers: this.getToolHeaders(),
+        },
+      )
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isReviewActionLoading = false;
+          this.reviewActionTargetId = null;
+          this.syncView();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.setStatus(
+            status === 'approved'
+              ? `Recensione #${review.id} approvata correttamente.`
+              : `Recensione #${review.id} rifiutata correttamente.`,
+            'success',
+          );
+          this.loadReviews();
+        },
+        error: (error) => {
+          this.setStatus(this.extractHttpError(error, 'Errore nella moderazione della recensione.'), 'error');
+          this.syncView();
+        },
+      });
+  }
+
+  protected reviewAuthorLabel(review: ModerationReview): string {
+    if (review.user_username && review.user_username.trim()) {
+      return `@${review.user_username.trim()}`;
+    }
+    if (review.user_nome && review.user_nome.trim()) {
+      return review.user_nome.trim();
+    }
+    if (review.user_id && review.user_id.trim()) {
+      return review.user_id.trim();
+    }
+    return 'utente sconosciuto';
+  }
+
+  protected reviewSpotLabel(review: ModerationReview): string {
+    if (review.spot_nome && review.spot_nome.trim()) {
+      return review.spot_nome.trim();
+    }
+    return `Spot #${review.spot_id}`;
+  }
+
+  protected reviewCommentPreview(commento: string): string {
+    const compact = commento.replace(/\s+/g, ' ').trim();
+    if (compact.length <= 240) {
+      return compact;
+    }
+    return `${compact.slice(0, 240)}...`;
+  }
+
+  protected refreshReports(): void {
+    this.loadReports();
+  }
+
+  protected searchReports(): void {
+    this.reportsPage = 1;
+    this.loadReports();
+  }
+
+  protected goToReportsPage(page: number): void {
+    if (page < 1 || page > this.reportsTotalPages || page === this.reportsPage) {
+      return;
+    }
+    this.reportsPage = page;
+    this.loadReports();
+  }
+
+  protected moderateReport(report: ModerationReport, status: Extract<SpotStatus, 'approved' | 'rejected'>): void {
+    if (this.isReportActionLoading || this.reportActionTargetId !== null) {
+      return;
+    }
+
+    this.isReportActionLoading = true;
+    this.reportActionTargetId = report.id;
+    this.setStatus(
+      status === 'approved'
+        ? `Approvo segnalazione #${report.id}...`
+        : `Rifiuto segnalazione #${report.id}...`,
+      'info',
+    );
+
+    this.http
+      .patch(
+        this.buildSpotsUrl(`${this.reportsModerateEndpoint}/${report.id}/decision`),
+        { decision: status },
+        {
+          headers: this.getToolHeaders(),
+        },
+      )
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isReportActionLoading = false;
+          this.reportActionTargetId = null;
+          this.syncView();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.setStatus(
+            status === 'approved'
+              ? `Segnalazione #${report.id} approvata correttamente.`
+              : `Segnalazione #${report.id} rifiutata correttamente.`,
+            'success',
+          );
+          this.loadReports();
+        },
+        error: (error) => {
+          this.setStatus(this.extractHttpError(error, 'Errore nella moderazione della segnalazione.'), 'error');
+          this.syncView();
+        },
+      });
+  }
+
+  protected reportAuthorLabel(report: ModerationReport): string {
+    if (report.user_username && report.user_username.trim()) {
+      return `@${report.user_username.trim()}`;
+    }
+    if (report.user_nome && report.user_nome.trim()) {
+      return report.user_nome.trim();
+    }
+    if (report.user_id && report.user_id.trim()) {
+      return report.user_id.trim();
+    }
+    return 'utente sconosciuto';
+  }
+
+  protected reportSpotLabel(report: ModerationReport): string {
+    if (report.spot_nome && report.spot_nome.trim()) {
+      return report.spot_nome.trim();
+    }
+    return `Spot #${report.spot_id}`;
+  }
+
+  protected reportReasonLabel(report: ModerationReport): string {
+    const raw = (report.motivo ?? '').trim();
+    if (!raw) {
+      return 'Motivo n/d';
+    }
+    return raw;
+  }
+
+  protected reportDescriptionPreview(descrizione: string): string {
+    const compact = descrizione.replace(/\s+/g, ' ').trim();
+    if (compact.length <= 240) {
+      return compact;
+    }
+    return `${compact.slice(0, 240)}...`;
   }
 
   protected applyFilters(): void {
@@ -715,6 +1031,215 @@ export class App implements OnInit {
           this.syncView();
         },
       });
+  }
+
+  private loadReviews(): void {
+    this.isReviewsLoading = true;
+    const params = new URLSearchParams({
+      status: this.selectedReviewStatus,
+      page: String(this.reviewsPage),
+      pageSize: String(this.reviewsPageSize),
+      sortBy: this.selectedReviewSortBy,
+      order: 'desc',
+    });
+
+    const query = this.reviewSearchText.trim();
+    if (query.length > 0) {
+      params.set('q', query);
+    }
+
+    this.http
+      .get<unknown>(this.buildSpotsUrl(`${this.reviewsListEndpoint}?${params.toString()}`), {
+        headers: this.getToolHeaders(),
+      })
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isReviewsLoading = false;
+          this.syncView();
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          const normalized = this.normalizeReviewsResponse(response);
+          this.reviews = normalized.data;
+          this.reviewsTotal = normalized.total;
+          this.reviewsTotalPages = normalized.totalPages;
+          this.reviewsPage = normalized.page;
+          this.syncView();
+        },
+        error: (error) => {
+          this.setStatus(this.extractHttpError(error, 'Errore durante il caricamento delle recensioni.'), 'error');
+          this.syncView();
+        },
+      });
+  }
+
+  private normalizeReviewsResponse(response: unknown): {
+    data: ModerationReview[];
+    total: number;
+    page: number;
+    totalPages: number;
+  } {
+    if (!response || typeof response !== 'object') {
+      return { data: [], total: 0, page: 1, totalPages: 1 };
+    }
+
+    const parsed = response as ReviewsResponse;
+    const rows = parsed.data;
+    if (!Array.isArray(rows)) {
+      return { data: [], total: 0, page: 1, totalPages: 1 };
+    }
+
+    const pagination = parsed.pagination ?? {};
+    const page = typeof pagination.page === 'number' ? pagination.page : this.reviewsPage;
+    const total = typeof pagination.total === 'number' ? pagination.total : rows.length;
+    const totalPages =
+      typeof pagination.totalPages === 'number'
+        ? pagination.totalPages
+        : Math.max(1, Math.ceil(total / this.reviewsPageSize));
+
+    const normalizedRows = rows
+      .map((row) => this.normalizeReview(row))
+      .filter((row) => row.commento.trim().length > 0);
+
+    return {
+      data: normalizedRows,
+      total,
+      page,
+      totalPages,
+    };
+  }
+
+  private normalizeReview(row: unknown): ModerationReview {
+    const raw = (row as Record<string, unknown>) ?? {};
+    const asNullableString = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+    const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
+    const asNumberOrNull = (value: unknown): number | null =>
+      typeof value === 'number' && Number.isFinite(value) ? value : null;
+    const asStatus = (value: unknown): SpotStatus => {
+      if (value === 'approved' || value === 'rejected') {
+        return value;
+      }
+      return 'pending';
+    };
+
+    return {
+      id: typeof raw['id'] === 'number' ? raw['id'] : Number(raw['id'] ?? 0),
+      spot_id: typeof raw['spot_id'] === 'number' ? raw['spot_id'] : Number(raw['spot_id'] ?? 0),
+      spot_nome: asNullableString(raw['spot_nome']),
+      user_id: asNullableString(raw['user_id']),
+      user_nome: asNullableString(raw['user_nome']),
+      user_username: asNullableString(raw['user_username']),
+      qualita: asNumberOrNull(raw['qualita']),
+      sicurezza: asNumberOrNull(raw['sicurezza']),
+      commento: asString(raw['commento']).trim(),
+      status: asStatus(raw['status']),
+      created_at: asNullableString(raw['created_at']),
+    };
+  }
+
+  private loadReports(): void {
+    this.isReportsLoading = true;
+    const params = new URLSearchParams({
+      status: this.selectedReportStatus,
+      page: String(this.reportsPage),
+      pageSize: String(this.reportsPageSize),
+      sortBy: this.selectedReportSortBy,
+      order: 'desc',
+    });
+
+    const query = this.reportSearchText.trim();
+    if (query.length > 0) {
+      params.set('q', query);
+    }
+
+    this.http
+      .get<unknown>(this.buildSpotsUrl(`${this.reportsListEndpoint}?${params.toString()}`), {
+        headers: this.getToolHeaders(),
+      })
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isReportsLoading = false;
+          this.syncView();
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          const normalized = this.normalizeReportsResponse(response);
+          this.reports = normalized.data;
+          this.reportsTotal = normalized.total;
+          this.reportsTotalPages = normalized.totalPages;
+          this.reportsPage = normalized.page;
+          this.syncView();
+        },
+        error: (error) => {
+          this.setStatus(this.extractHttpError(error, 'Errore durante il caricamento delle segnalazioni.'), 'error');
+          this.syncView();
+        },
+      });
+  }
+
+  private normalizeReportsResponse(response: unknown): {
+    data: ModerationReport[];
+    total: number;
+    page: number;
+    totalPages: number;
+  } {
+    if (!response || typeof response !== 'object') {
+      return { data: [], total: 0, page: 1, totalPages: 1 };
+    }
+
+    const parsed = response as ReportsResponse;
+    const rows = parsed.data;
+    if (!Array.isArray(rows)) {
+      return { data: [], total: 0, page: 1, totalPages: 1 };
+    }
+
+    const pagination = parsed.pagination ?? {};
+    const page = typeof pagination.page === 'number' ? pagination.page : this.reportsPage;
+    const total = typeof pagination.total === 'number' ? pagination.total : rows.length;
+    const totalPages =
+      typeof pagination.totalPages === 'number'
+        ? pagination.totalPages
+        : Math.max(1, Math.ceil(total / this.reportsPageSize));
+
+    const normalizedRows = rows
+      .map((row) => this.normalizeReport(row))
+      .filter((row) => row.descrizione.trim().length > 0);
+
+    return {
+      data: normalizedRows,
+      total,
+      page,
+      totalPages,
+    };
+  }
+
+  private normalizeReport(row: unknown): ModerationReport {
+    const raw = (row as Record<string, unknown>) ?? {};
+    const asNullableString = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+    const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
+    const asStatus = (value: unknown): SpotStatus => {
+      if (value === 'approved' || value === 'rejected') {
+        return value;
+      }
+      return 'pending';
+    };
+
+    return {
+      id: typeof raw['id'] === 'number' ? raw['id'] : Number(raw['id'] ?? 0),
+      spot_id: typeof raw['spot_id'] === 'number' ? raw['spot_id'] : Number(raw['spot_id'] ?? 0),
+      spot_nome: asNullableString(raw['spot_nome']),
+      user_id: asNullableString(raw['user_id']),
+      user_nome: asNullableString(raw['user_nome']),
+      user_username: asNullableString(raw['user_username']),
+      motivo: asNullableString(raw['motivo']),
+      descrizione: asString(raw['descrizione']).trim(),
+      status: asStatus(raw['status']),
+      created_at: asNullableString(raw['created_at']),
+    };
   }
 
   private normalizeSpotsResponse(response: unknown): {

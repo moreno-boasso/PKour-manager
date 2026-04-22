@@ -398,6 +398,34 @@ body {
   font-size: 12px;
 }
 
+.review-list-grid {
+  margin-top: 12px;
+}
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+
+.review-rating {
+  margin: 10px 0 0 0;
+  color: var(--pk-accent-bright);
+  font-size: 12px;
+}
+
+.review-comment {
+  margin: 10px 0 0 0;
+  font-size: 13px;
+  line-height: 1.58;
+  color: var(--pk-text);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .spots-pagination {
   margin-top: 14px;
   display: flex;
