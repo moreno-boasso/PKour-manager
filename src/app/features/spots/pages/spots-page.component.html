@@ -1,0 +1,132 @@
+@if (statusMessage) {
+  <div
+    class="status-banner"
+    [class.status-success]="statusType === 'success'"
+    [class.status-error]="statusType === 'error'"
+    [class.status-info]="statusType === 'info'"
+  >
+    {{ statusMessage }}
+  </div>
+}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3 class="panel-kicker">Moderazione Spot · {{ spotStatusLabel }}</h3>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="refreshSpots()" [disabled]="isSpotsLoading">
+        {{ isSpotsLoading ? 'Carico...' : 'Aggiorna' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-grid">
+    <input type="text" class="field-input" placeholder="Cerca per nome o tipo spot..." [(ngModel)]="spotSearchText" (keyup.enter)="searchSpots()" />
+    <div class="spots-toolbar">
+      <select class="field-input" [(ngModel)]="selectedSpotStatus" (ngModelChange)="refreshSpots()">
+        <option value="pending">In attesa</option>
+        <option value="approved">Approvati</option>
+        <option value="rejected">Rifiutati</option>
+      </select>
+      <button type="button" class="btn btn-ghost" (click)="searchSpots()" [disabled]="isSpotsLoading">Cerca</button>
+    </div>
+  </div>
+
+  <div class="spots-toolbar spots-toolbar-extended">
+    <select class="field-input" [(ngModel)]="selectedSpotType" (ngModelChange)="searchSpots()">
+      <option value="all">Tipo: tutti</option>
+      <option value="indoor">Tipo: indoor</option>
+      <option value="outdoor">Tipo: outdoor</option>
+    </select>
+    <select class="field-input" [(ngModel)]="selectedSpotHasPhotos" (ngModelChange)="searchSpots()">
+      <option value="all">Foto: tutte</option>
+      <option value="true">Foto: presenti</option>
+      <option value="false">Foto: assenti</option>
+    </select>
+  </div>
+
+  <div class="spot-list-grid">
+    @for (spot of spots; track spot.id) {
+      <article class="spot-card spot-card-clickable" (click)="openSpotDetail(spot)">
+        <div class="spot-card-head">
+          <p class="spot-name">{{ spot.nome || ('Spot #' + spot.id) }}</p>
+          <span class="quality-pill" [class.quality-ok]="spot.status === 'approved'" [class.quality-warn]="spot.status === 'pending'" [class.quality-critical]="spot.status === 'rejected'">
+            {{ spot.status }}
+          </span>
+        </div>
+        <p class="spot-meta">#{{ spot.id }} @if (spot.tipo) { · {{ spot.tipo }} }</p>
+        <p class="spot-counters">Foto {{ spot.photos_count }} · Recensioni {{ spot.reviews_count }} · Segnalazioni {{ spot.reports_count }} · Visitatori {{ spot.visitors_count }}</p>
+        @if (spot.descrizione) {
+          <p class="spot-desc">{{ spot.descrizione }}</p>
+        } @else {
+          <p class="spot-desc spot-desc-empty">Nessuna descrizione.</p>
+        }
+        <div class="spot-cover-wrap">
+          @if (spot.photo_cover_url) {
+            <img class="spot-cover-img" [src]="spot.photo_cover_url" [alt]="'Copertina spot ' + (spot.nome || spot.id)" />
+          } @else {
+            <div class="spot-cover-empty">Nessuna foto copertina</div>
+          }
+        </div>
+        <div class="spot-actions">
+          <button type="button" class="btn btn-primary" (click)="$event.stopPropagation(); moderateSpot(spot, 'approved')" [disabled]="spotActionTargetId === spot.id || isSpotActionLoading || spot.status === 'approved'">
+            {{ spotActionTargetId === spot.id && isSpotActionLoading ? 'Operazione...' : 'Approva' }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="$event.stopPropagation(); moderateSpot(spot, 'rejected')" [disabled]="spotActionTargetId === spot.id || isSpotActionLoading">
+            {{ spotActionTargetId === spot.id && isSpotActionLoading ? 'Operazione...' : 'Rifiuta' }}
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">Nessuno spot trovato con i filtri attivi.</p>
+    }
+  </div>
+
+  <div class="spots-pagination">
+    <button type="button" class="btn btn-ghost" (click)="goToSpotsPage(spotsPage - 1)" [disabled]="spotsPage <= 1 || isSpotsLoading">← Prev</button>
+    <span class="spots-page-label">Pagina {{ spotsPage }} / {{ spotsTotalPages }} · Totale {{ spotsTotal }}</span>
+    <button type="button" class="btn btn-ghost" (click)="goToSpotsPage(spotsPage + 1)" [disabled]="spotsPage >= spotsTotalPages || isSpotsLoading">Next →</button>
+  </div>
+
+  @if (isSpotDetailOpen) {
+    <div class="spot-detail-overlay" (click)="closeSpotDetail()">
+      <div class="spot-detail-wrap" (click)="$event.stopPropagation()">
+        <div class="spot-detail-head">
+          <div>
+            <p class="panel-kicker">Dettaglio Spot</p>
+            <h4 class="spot-detail-title">@if (selectedSpotDetail) { {{ selectedSpotDetail.nome || ('Spot #' + selectedSpotDetail.id) }} } @else { Caricamento... }</h4>
+          </div>
+          <button type="button" class="btn btn-ghost" (click)="closeSpotDetail()">Chiudi</button>
+        </div>
+
+        @if (isSpotDetailLoading) {
+          <p class="spot-detail-loading">Carico dettaglio spot...</p>
+        } @else if (selectedSpotDetail) {
+          <div class="spot-detail-grid">
+            <div class="spot-detail-card">
+              <p class="spot-detail-label">Info principali</p>
+              <p class="spot-detail-text">ID #{{ selectedSpotDetail.id }} · Stato {{ selectedSpotDetail.status }}</p>
+              <p class="spot-detail-text">Tipo: {{ selectedSpotDetail.tipo || 'n/d' }} · Creato: {{ formatDateTime(selectedSpotDetail.created_at) }}</p>
+            </div>
+            <div class="spot-detail-card">
+              <p class="spot-detail-label">Maps / 3D View</p>
+              <div class="spot-links">
+                @if (selectedSpotDetail.maps?.googleMapsUrl) { <a class="preview-link" [href]="selectedSpotDetail.maps?.googleMapsUrl" target="_blank" rel="noopener noreferrer">Apri Google Maps</a> }
+                @if (selectedSpotDetail.maps?.googleMapsSatelliteUrl) { <a class="preview-link" [href]="selectedSpotDetail.maps?.googleMapsSatelliteUrl" target="_blank" rel="noopener noreferrer">Apri Satellite/3D</a> }
+                @if (selectedSpotDetail.maps?.googleEarthWebUrl) { <a class="preview-link" [href]="selectedSpotDetail.maps?.googleEarthWebUrl" target="_blank" rel="noopener noreferrer">Apri Google Earth Web</a> }
+                @if (selectedSpotDetail.maps?.googleMapsStreetViewUrl) { <a class="preview-link" [href]="selectedSpotDetail.maps?.googleMapsStreetViewUrl" target="_blank" rel="noopener noreferrer">Apri Street View</a> }
+              </div>
+            </div>
+          </div>
+
+          <div class="spot-webviews-grid">
+            @if (mapsEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Mappa (webview)</p><iframe [src]="mapsEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Mappa spot"></iframe></div> }
+            @if (satelliteEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Satellite / 3D (webview)</p><iframe [src]="satelliteEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Vista satellite spot"></iframe></div> }
+            @if (streetViewEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Street View (webview)</p><iframe [src]="streetViewEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Street view spot"></iframe></div> }
+          </div>
+        } @else {
+          <p class="spot-detail-loading">Dettaglio spot non disponibile.</p>
+        }
+      </div>
+    </div>
+  }
+</section>

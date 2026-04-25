@@ -1,0 +1,133 @@
+@if (statusMessage) {
+  <div class="status-banner" [class.status-success]="statusType === 'success'" [class.status-error]="statusType === 'error'" [class.status-info]="statusType === 'info'">
+    {{ statusMessage }}
+  </div>
+}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3 class="panel-kicker">Lista Tricks</h3>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="refreshTricks()" [disabled]="isLoading">{{ isLoading ? 'Carico...' : 'Aggiorna' }}</button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()">+ Crea Trick</button>
+    </div>
+  </div>
+
+  <div class="filters-grid">
+    <input type="text" class="field-input" placeholder="Cerca per id, nome, tag..." [(ngModel)]="searchText" (ngModelChange)="applyFilters()" />
+    <select class="field-input" [(ngModel)]="selectedDifficulty" (ngModelChange)="applyFilters()">
+      <option value="">Tutte le difficolta</option>
+      @for (diff of difficultyOptions; track diff) {
+        <option [value]="diff">{{ diff }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filters-tags">
+    <label class="filter-chip"><input type="checkbox" [(ngModel)]="filterOnlyIssues" (ngModelChange)="applyFilters()" />Solo con problemi</label>
+    <label class="filter-chip"><input type="checkbox" [(ngModel)]="filterMissingThumbnail" (ngModelChange)="applyFilters()" />Thumbnail KO</label>
+    <label class="filter-chip"><input type="checkbox" [(ngModel)]="filterMissingVideo" (ngModelChange)="applyFilters()" />Manca video</label>
+    <label class="filter-chip"><input type="checkbox" [(ngModel)]="filterVideoNotPreviewable" (ngModelChange)="applyFilters()" />Video non previewabile</label>
+    <label class="filter-chip"><input type="checkbox" [(ngModel)]="filterBrokenThumbnail" (ngModelChange)="applyFilters()" />Solo thumbnail rotte</label>
+  </div>
+
+  <div class="cards-grid">
+    @for (trick of filteredTricks; track trick.id) {
+      <button type="button" class="trick-card" (click)="openEditModal(trick)">
+        <div class="trick-card-top">
+          <span class="quality-pill" [class.quality-ok]="trick.quality.level === 'ok'" [class.quality-warn]="trick.quality.level === 'warn'" [class.quality-critical]="trick.quality.level === 'critical'">
+            {{ trick.quality.level === 'ok' ? 'OK' : (trick.quality.level === 'warn' ? 'WARN' : 'CRIT') }}
+          </span>
+          @if (trick.quality.issues.length > 0) { <span class="issues-pill">{{ trick.quality.issues.length }} issue</span> }
+        </div>
+        <p class="trick-name">{{ trick.nome }}</p>
+        <p class="trick-meta">{{ trick.id }} · {{ trick.difficolta }}</p>
+        <p class="trick-tags">{{ trick.tags.length > 0 ? trick.tags.join(', ') : 'Nessun tag' }}</p>
+      </button>
+    } @empty {
+      <p class="empty-state">Nessun trick trovato.</p>
+    }
+  </div>
+</section>
+
+@if (isModalOpen) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="modal-kicker">{{ isCreateMode ? 'Creazione' : 'Modifica' }}</p>
+          <h3 class="modal-title">{{ isCreateMode ? 'Nuovo Trick' : 'Modifica Trick' }}</h3>
+        </div>
+        <button type="button" class="btn btn-ghost" (click)="closeModal()">Chiudi</button>
+      </div>
+
+      <div class="modal-grid">
+        <label class="field"><span class="field-label">ID *</span><input type="text" class="field-input" [(ngModel)]="formId" /></label>
+        <label class="field"><span class="field-label">Nome *</span><input type="text" class="field-input" [(ngModel)]="formNome" /></label>
+        <label class="field"><span class="field-label">Difficolta *</span><select class="field-input" [(ngModel)]="formDifficolta">@for (diff of difficultyOptions; track diff) {<option [value]="diff">{{ diff }}</option>}</select></label>
+        <label class="field"><span class="field-label">Video URL</span><input type="url" class="field-input" [(ngModel)]="formVideoUrl" /></label>
+        <label class="field field-full"><span class="field-label">Thumbnail URL</span><input type="url" class="field-input" [(ngModel)]="formThumbnailUrl" /></label>
+        <label class="field field-full">
+          <span class="field-label">Tags (seleziona 1-3 consigliati)</span>
+          <div class="filters-tags">
+            @for (tag of trickTagOptions; track tag) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.menu-item-active]="isPresetTagSelected(tag)"
+                (click)="togglePresetTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            }
+          </div>
+          <textarea class="field-input field-area" [(ngModel)]="formTags" placeholder="Oppure scrivi tag personalizzati separati da virgola"></textarea>
+        </label>
+        <label class="field field-full">
+          <span class="field-label">Required (feature necessarie)</span>
+          <div class="filters-tags">
+            @for (feature of requiredFeatureOptions; track feature) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.menu-item-active]="isRequiredFeatureSelected(feature)"
+                (click)="toggleRequiredFeature(feature)"
+              >
+                {{ feature }}
+              </button>
+            }
+          </div>
+          <textarea class="field-input field-area" [(ngModel)]="formRequired" placeholder="Oppure scrivi feature personalizzate separate da virgola"></textarea>
+        </label>
+      </div>
+
+      <div class="media-preview">
+        <p class="preview-kicker">Preview media</p>
+        <div class="preview-grid">
+          <div class="preview-card">
+            <p class="preview-label">Anteprima immagine</p>
+            @if (thumbnailPreviewUrl) { <img [src]="thumbnailPreviewUrl" alt="Anteprima thumbnail trick" class="preview-media" /> } @else { <div class="preview-empty">Thumbnail mancante o non valida</div> }
+            @if (normalizedFormThumbnailUrl) { <a class="preview-link" [href]="normalizedFormThumbnailUrl" target="_blank" rel="noopener noreferrer">Apri immagine originale</a> }
+          </div>
+          <div class="preview-card">
+            <p class="preview-label">Anteprima video YouTube</p>
+            @if (youtubeEmbedPreviewUrl) { <iframe [src]="youtubeEmbedPreviewUrl" class="preview-media" title="Anteprima video YouTube"></iframe> } @else { <div class="preview-empty">Video mancante o non previewabile</div> }
+            @if (normalizedFormVideoUrl) { <a class="preview-link" [href]="normalizedFormVideoUrl" target="_blank" rel="noopener noreferrer">Apri video originale</a> }
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <div class="modal-actions-left">
+          @if (!isCreateMode) {
+            <button type="button" class="btn btn-danger" (click)="deleteCurrentTrick()" [disabled]="isSaving || isDeleting">{{ isDeleting ? 'Eliminazione...' : 'Elimina trick' }}</button>
+          }
+        </div>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">Annulla</button>
+          <button type="button" class="btn btn-primary" [disabled]="isSaving || isDeleting" (click)="saveTrick()">{{ isSaving ? 'Salvataggio...' : (isCreateMode ? 'Crea trick' : 'Salva modifiche') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

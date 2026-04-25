@@ -1,0 +1,58 @@
+@if (statusMessage) {
+  <div class="status-banner" [class.status-success]="statusType === 'success'" [class.status-error]="statusType === 'error'" [class.status-info]="statusType === 'info'">
+    {{ statusMessage }}
+  </div>
+}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3 class="panel-kicker">Moderazione Recensioni · {{ reviewStatusLabel }}</h3>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="refreshReviews()" [disabled]="isReviewsLoading">
+        {{ isReviewsLoading ? 'Carico...' : 'Aggiorna' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-grid">
+    <input type="text" class="field-input" placeholder="Cerca testo, spot o autore..." [(ngModel)]="reviewSearchText" (keyup.enter)="searchReviews()" />
+    <div class="spots-toolbar">
+      <select class="field-input" [(ngModel)]="selectedReviewStatus" (ngModelChange)="searchReviews()">
+        <option value="pending">In attesa</option>
+        <option value="approved">Approvate</option>
+        <option value="rejected">Rifiutate</option>
+      </select>
+      <button type="button" class="btn btn-ghost" (click)="searchReviews()" [disabled]="isReviewsLoading">Cerca</button>
+    </div>
+  </div>
+
+  <div class="spot-list-grid review-list-grid">
+    @for (review of reviews; track review.id) {
+      <article class="spot-card review-card">
+        <div class="spot-card-head">
+          <p class="spot-name">{{ reviewSpotLabel(review) }}</p>
+          <span class="quality-pill" [class.quality-ok]="review.status === 'approved'" [class.quality-warn]="review.status === 'pending'" [class.quality-critical]="review.status === 'rejected'">{{ review.status }}</span>
+        </div>
+        <p class="spot-meta">Recensione #{{ review.id }} · {{ reviewAuthorLabel(review) }} · {{ formatDateTime(review.created_at) }}</p>
+        <p class="review-rating">Qualita {{ review.qualita ?? 'n/d' }} · Sicurezza {{ review.sicurezza ?? 'n/d' }}</p>
+        <p class="review-comment">{{ reviewCommentPreview(review.commento) }}</p>
+        <div class="spot-actions">
+          <button type="button" class="btn btn-primary" (click)="moderateReview(review, 'approved')" [disabled]="reviewActionTargetId === review.id || isReviewActionLoading || review.status === 'approved'">
+            {{ reviewActionTargetId === review.id && isReviewActionLoading ? 'Operazione...' : 'Approva' }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="moderateReview(review, 'rejected')" [disabled]="reviewActionTargetId === review.id || isReviewActionLoading || review.status === 'rejected'">
+            {{ reviewActionTargetId === review.id && isReviewActionLoading ? 'Operazione...' : 'Rifiuta' }}
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">Nessuna recensione testuale trovata con i filtri attivi.</p>
+    }
+  </div>
+
+  <div class="spots-pagination">
+    <button type="button" class="btn btn-ghost" (click)="goToReviewsPage(reviewsPage - 1)" [disabled]="reviewsPage <= 1 || isReviewsLoading">← Prev</button>
+    <span class="spots-page-label">Pagina {{ reviewsPage }} / {{ reviewsTotalPages }} · Totale {{ reviewsTotal }}</span>
+    <button type="button" class="btn btn-ghost" (click)="goToReviewsPage(reviewsPage + 1)" [disabled]="reviewsPage >= reviewsTotalPages || isReviewsLoading">Next →</button>
+  </div>
+</section>
