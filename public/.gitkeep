@@ -1,0 +1,2 @@
+# This file ensures the public directory is tracked by git
+# The env.js file is generated during build and should not be committed
