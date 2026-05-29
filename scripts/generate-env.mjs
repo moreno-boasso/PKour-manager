@@ -61,3 +61,5 @@ const envFileContent = `window.__PKOUR_ENV__ = ${JSON.stringify(runtimeEnv, null
 
 fs.writeFileSync(outputPath, envFileContent, 'utf-8');
 console.log(`Generated runtime env file: ${outputPath}`);
+console.log('DEBUG: process.env.PKOUR_API_BASE_URL =', process.env.PKOUR_API_BASE_URL);
+console.log('DEBUG: runtimeEnv.PKOUR_API_BASE_URL =', runtimeEnv.PKOUR_API_BASE_URL);
