@@ -17,8 +17,8 @@
     }
   ],
   "env": {
-    "PKOUR_API_BASE_URL": "https://pkour-manager.onrender.com",
-    "PKOUR_SPOTS_API_BASE_URL": "https://pkour-manager.onrender.com",
+    "PKOUR_API_BASE_URL": "https://pkour-be-manager.onrender.com",
+    "PKOUR_SPOTS_API_BASE_URL": "https://pkour-be-manager.onrender.com",
     "PKOUR_SPOTS_LIST_ENDPOINT": "/spots/moderation",
     "PKOUR_SPOTS_MODERATE_ENDPOINT": "/spots/moderation",
     "PKOUR_SPOTS_DETAIL_ENDPOINT": "/spots/moderation",

@@ -30,9 +30,27 @@ if (fs.existsSync(envPath)) {
   parsedEnv = dotenv.parse(fileContent);
 }
 
+// On Vercel, env vars are in process.env, not .env file
+// Priority: process.env > .env file > fallback
 const runtimeEnv = {
   ...fallback,
   ...parsedEnv,
+  // Override with process.env if available (Vercel deployment)
+  ...(process.env.PKOUR_API_BASE_URL && { PKOUR_API_BASE_URL: process.env.PKOUR_API_BASE_URL }),
+  ...(process.env.PKOUR_SPOTS_API_BASE_URL && { PKOUR_SPOTS_API_BASE_URL: process.env.PKOUR_SPOTS_API_BASE_URL }),
+  ...(process.env.PKOUR_SPOTS_LIST_ENDPOINT && { PKOUR_SPOTS_LIST_ENDPOINT: process.env.PKOUR_SPOTS_LIST_ENDPOINT }),
+  ...(process.env.PKOUR_SPOTS_MODERATE_ENDPOINT && { PKOUR_SPOTS_MODERATE_ENDPOINT: process.env.PKOUR_SPOTS_MODERATE_ENDPOINT }),
+  ...(process.env.PKOUR_SPOTS_DETAIL_ENDPOINT && { PKOUR_SPOTS_DETAIL_ENDPOINT: process.env.PKOUR_SPOTS_DETAIL_ENDPOINT }),
+  ...(process.env.PKOUR_REVIEWS_LIST_ENDPOINT && { PKOUR_REVIEWS_LIST_ENDPOINT: process.env.PKOUR_REVIEWS_LIST_ENDPOINT }),
+  ...(process.env.PKOUR_REVIEWS_MODERATE_ENDPOINT && { PKOUR_REVIEWS_MODERATE_ENDPOINT: process.env.PKOUR_REVIEWS_MODERATE_ENDPOINT }),
+  ...(process.env.PKOUR_REPORTS_LIST_ENDPOINT && { PKOUR_REPORTS_LIST_ENDPOINT: process.env.PKOUR_REPORTS_LIST_ENDPOINT }),
+  ...(process.env.PKOUR_REPORTS_MODERATE_ENDPOINT && { PKOUR_REPORTS_MODERATE_ENDPOINT: process.env.PKOUR_REPORTS_MODERATE_ENDPOINT }),
+  ...(process.env.PKOUR_BUG_REPORTS_LIST_ENDPOINT && { PKOUR_BUG_REPORTS_LIST_ENDPOINT: process.env.PKOUR_BUG_REPORTS_LIST_ENDPOINT }),
+  ...(process.env.PKOUR_BUG_REPORTS_MODERATE_ENDPOINT && { PKOUR_BUG_REPORTS_MODERATE_ENDPOINT: process.env.PKOUR_BUG_REPORTS_MODERATE_ENDPOINT }),
+  ...(process.env.PKOUR_PHOTOS_LIST_ENDPOINT && { PKOUR_PHOTOS_LIST_ENDPOINT: process.env.PKOUR_PHOTOS_LIST_ENDPOINT }),
+  ...(process.env.PKOUR_PHOTOS_MODERATE_ENDPOINT && { PKOUR_PHOTOS_MODERATE_ENDPOINT: process.env.PKOUR_PHOTOS_MODERATE_ENDPOINT }),
+  ...(process.env.PKOUR_TRICKS_WRITE_ENDPOINT && { PKOUR_TRICKS_WRITE_ENDPOINT: process.env.PKOUR_TRICKS_WRITE_ENDPOINT }),
+  ...(process.env.PKOUR_TRICKS_DELETE_ENDPOINT && { PKOUR_TRICKS_DELETE_ENDPOINT: process.env.PKOUR_TRICKS_DELETE_ENDPOINT }),
 };
 
 // Never expose local secrets to browser runtime.
