@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, timeout } from 'rxjs';
 import { ManagerUtilsService } from '../../../core/services/manager-utils.service';
+import { ColdStartService } from '../../../core/services/cold-start.service';
 
 type SpotStatus = 'pending' | 'approved' | 'rejected';
 type SpotTypeFilter = 'all' | 'indoor' | 'outdoor';
@@ -76,6 +77,7 @@ export class SpotsPageComponent implements OnInit {
     private readonly sanitizer: DomSanitizer,
     private readonly utils: ManagerUtilsService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly coldStart: ColdStartService,
   ) {}
 
   ngOnInit(): void {
@@ -146,12 +148,13 @@ export class SpotsPageComponent implements OnInit {
     this.spotActionTargetId = spot.id;
     this.setStatus(status === 'approved' ? `Approvo spot "${spot.nome}"...` : `Rifiuto spot "${spot.nome}"...`, 'info');
 
-    this.http.patch(
+    const patch$ = this.http.patch(
       this.utils.buildSpotsUrl(`${this.utils.spotsModerateEndpoint}/${spot.id}/decision`),
       { decision: status },
       { headers: this.utils.getToolHeaders() },
-    ).pipe(
-      timeout(15000),
+    );
+
+    this.coldStart.withColdStartRetry(patch$, 3).pipe(
       finalize(() => {
         this.isSpotActionLoading = false;
         this.spotActionTargetId = null;
@@ -183,10 +186,11 @@ export class SpotsPageComponent implements OnInit {
     const query = this.spotSearchText.trim();
     if (query) params.set('q', query);
 
-    this.http.get<unknown>(this.utils.buildSpotsUrl(`${this.utils.spotsListEndpoint}?${params.toString()}`), {
+    const request$ = this.http.get<unknown>(this.utils.buildSpotsUrl(`${this.utils.spotsListEndpoint}?${params.toString()}`), {
       headers: this.utils.getToolHeaders(),
-    }).pipe(
-      timeout(15000),
+    });
+
+    this.coldStart.withColdStartRetry(request$, 3).pipe(
       finalize(() => {
         this.isSpotsLoading = false;
         this.syncView();
@@ -216,10 +220,11 @@ export class SpotsPageComponent implements OnInit {
 
   private loadSpotDetail(spotId: number): void {
     this.isSpotDetailLoading = true;
-    this.http.get<SpotDetail>(this.utils.buildSpotsUrl(`${this.utils.spotsDetailEndpoint}/${spotId}`), {
+    const get$ = this.http.get<SpotDetail>(this.utils.buildSpotsUrl(`${this.utils.spotsDetailEndpoint}/${spotId}`), {
       headers: this.utils.getToolHeaders(),
-    }).pipe(
-      timeout(15000),
+    });
+
+    this.coldStart.withColdStartRetry(get$, 3).pipe(
       finalize(() => {
         this.isSpotDetailLoading = false;
         this.syncView();
