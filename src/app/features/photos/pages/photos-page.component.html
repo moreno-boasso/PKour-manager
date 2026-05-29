@@ -1,0 +1,120 @@
+@if (statusMessage) {
+  <div class="status-banner" [class.status-success]="statusType === 'success'" [class.status-error]="statusType === 'error'" [class.status-info]="statusType === 'info'">
+    {{ statusMessage }}
+  </div>
+}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3 class="panel-kicker">Moderazione Foto Spot · {{ photoStatusLabel }}</h3>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="refreshPhotos()" [disabled]="isPhotosLoading">
+        {{ isPhotosLoading ? 'Carico...' : 'Aggiorna' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-grid">
+    <input type="text" class="field-input" placeholder="Cerca per spot, uploader o descrizione..." [(ngModel)]="photoSearchText" (keyup.enter)="searchPhotos()" />
+    <div class="spots-toolbar">
+      <select class="field-input" [(ngModel)]="selectedPhotoStatus" (ngModelChange)="searchPhotos()">
+        <option value="pending">In attesa</option>
+        <option value="approved">Approvate</option>
+      </select>
+      <button type="button" class="btn btn-ghost" (click)="searchPhotos()" [disabled]="isPhotosLoading">Cerca</button>
+    </div>
+  </div>
+
+  <div class="spot-list-grid">
+    @for (photo of photos; track photo.id) {
+      <article class="spot-card spot-card-clickable" (click)="selectPhoto(photo)">
+        <img class="spot-cover-img" [src]="photo.url" [alt]="'Foto #' + photo.id" />
+        <div class="spot-card-head" style="margin-top: 10px;">
+          <p class="spot-name">{{ spotLabel(photo) }}</p>
+          <span class="quality-pill" [class.quality-ok]="photo.status === 'approved'" [class.quality-warn]="photo.status === 'pending'" [class.quality-critical]="photo.status === 'rejected'">
+            {{ photo.status }}
+          </span>
+        </div>
+        <p class="spot-meta">Foto #{{ photo.id }} · {{ uploaderLabel(photo) }} · {{ formatDateTime(photo.created_at) }}</p>
+        <p class="spot-desc">{{ photo.descrizione || 'Nessuna descrizione' }}</p>
+        <p class="spot-counters">Spot #{{ photo.spot.id }} @if (photo.spot.tipo) { · {{ photo.spot.tipo }} } @if (photo.spot.status) { · status spot: {{ photo.spot.status }} }</p>
+        <div class="spot-actions">
+          <button type="button" class="btn btn-primary" (click)="$event.stopPropagation(); moderatePhoto(photo, 'approved')" [disabled]="photoActionTargetId === photo.id || isPhotoActionLoading || photo.status === 'approved'">
+            {{ photoActionTargetId === photo.id && isPhotoActionLoading ? 'Operazione...' : 'Approva' }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="$event.stopPropagation(); moderatePhoto(photo, 'rejected')" [disabled]="photoActionTargetId === photo.id || isPhotoActionLoading || photo.status === 'rejected'">
+            {{ photoActionTargetId === photo.id && isPhotoActionLoading ? 'Operazione...' : 'Rifiuta' }}
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">Nessuna foto trovata con i filtri attivi.</p>
+    }
+  </div>
+
+  <div class="spots-pagination">
+    <button type="button" class="btn btn-ghost" (click)="goToPhotosPage(photosPage - 1)" [disabled]="photosPage <= 1 || isPhotosLoading">← Prev</button>
+    <span class="spots-page-label">Pagina {{ photosPage }} / {{ photosTotalPages }} · Totale {{ photosTotal }}</span>
+    <button type="button" class="btn btn-ghost" (click)="goToPhotosPage(photosPage + 1)" [disabled]="photosPage >= photosTotalPages || isPhotosLoading">Next →</button>
+  </div>
+
+</section>
+
+@if (selectedPhoto) {
+  <div class="spot-detail-overlay" (click)="closeSelectedPhoto()">
+    <div class="spot-detail-wrap" (click)="$event.stopPropagation()">
+      <div class="spot-detail-head">
+        <div>
+          <p class="panel-kicker">Dettaglio Foto Spot</p>
+          <h4 class="spot-detail-title">{{ spotLabel(selectedPhoto) }} · Foto #{{ selectedPhoto.id }}</h4>
+        </div>
+        <button type="button" class="btn btn-ghost" (click)="closeSelectedPhoto()">Chiudi</button>
+      </div>
+
+      <div class="spot-detail-grid">
+        <div class="spot-detail-card">
+          <p class="spot-detail-label">Info foto</p>
+          <p class="spot-detail-text">Stato: {{ selectedPhoto.status }} · Caricata: {{ formatDateTime(selectedPhoto.created_at) }}</p>
+          <p class="spot-detail-text">Uploader: {{ uploaderLabel(selectedPhoto) }}</p>
+          <p class="spot-detail-text">Descrizione: {{ selectedPhoto.descrizione || 'n/d' }}</p>
+          <div class="spot-detail-actions">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="moderatePhoto(selectedPhoto, 'approved')"
+              [disabled]="photoActionTargetId === selectedPhoto.id || isPhotoActionLoading || selectedPhoto.status === 'approved'">
+              {{ photoActionTargetId === selectedPhoto.id && isPhotoActionLoading ? 'Operazione...' : 'Approva' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="moderatePhoto(selectedPhoto, 'rejected')"
+              [disabled]="photoActionTargetId === selectedPhoto.id || isPhotoActionLoading || selectedPhoto.status === 'rejected'">
+              {{ photoActionTargetId === selectedPhoto.id && isPhotoActionLoading ? 'Operazione...' : 'Rifiuta' }}
+            </button>
+          </div>
+        </div>
+        <div class="spot-detail-card">
+          <p class="spot-detail-label">Maps / 3D View dello spot</p>
+          <div class="spot-links">
+            @if (selectedPhoto.spot.maps?.googleMapsUrl) { <a class="preview-link" [href]="selectedPhoto.spot.maps?.googleMapsUrl" target="_blank" rel="noopener noreferrer">Apri Google Maps</a> }
+            @if (selectedPhoto.spot.maps?.googleMapsSatelliteUrl) { <a class="preview-link" [href]="selectedPhoto.spot.maps?.googleMapsSatelliteUrl" target="_blank" rel="noopener noreferrer">Apri Satellite/3D</a> }
+            @if (selectedPhoto.spot.maps?.googleEarthWebUrl) { <a class="preview-link" [href]="selectedPhoto.spot.maps?.googleEarthWebUrl" target="_blank" rel="noopener noreferrer">Apri Google Earth Web</a> }
+            @if (selectedPhoto.spot.maps?.googleMapsStreetViewUrl) { <a class="preview-link" [href]="selectedPhoto.spot.maps?.googleMapsStreetViewUrl" target="_blank" rel="noopener noreferrer">Apri Street View</a> }
+          </div>
+        </div>
+      </div>
+
+      <div class="spot-webviews-grid">
+        <div class="spot-webview-card">
+          <p class="spot-detail-label">Foto</p>
+          <img class="spot-webview-frame spot-photo-preview" [src]="selectedPhoto.url" [alt]="'Foto #' + selectedPhoto.id" style="object-fit: cover;" (click)="openPhotoInNewTab(selectedPhoto.url)" />
+          <button type="button" class="btn btn-ghost spot-photo-fullscreen-btn" (click)="openPhotoInNewTab(selectedPhoto.url)">Apri immagine</button>
+        </div>
+        @if (mapsEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Mappa (webview)</p><iframe [src]="mapsEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Mappa spot"></iframe></div> }
+        @if (satelliteEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Satellite / 3D (webview)</p><iframe [src]="satelliteEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Vista satellite spot"></iframe></div> }
+        @if (streetViewEmbedPreviewUrl) { <div class="spot-webview-card"><p class="spot-detail-label">Street View (webview)</p><iframe [src]="streetViewEmbedPreviewUrl" class="spot-webview-frame" loading="lazy" title="Street view spot"></iframe></div> }
+      </div>
+    </div>
+  </div>
+}

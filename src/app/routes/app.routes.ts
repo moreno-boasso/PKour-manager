@@ -16,12 +16,20 @@ export const routes: Routes = [
         loadChildren: () => import('../features/spots/spots.routes').then((m) => m.SPOTS_ROUTES),
       },
       {
+        path: 'photos',
+        loadChildren: () => import('../features/photos/photos.routes').then((m) => m.PHOTOS_ROUTES),
+      },
+      {
         path: 'reviews',
         loadChildren: () => import('../features/reviews/reviews.routes').then((m) => m.REVIEWS_ROUTES),
       },
       {
         path: 'reports',
         loadChildren: () => import('../features/reports/reports.routes').then((m) => m.REPORTS_ROUTES),
+      },
+      {
+        path: 'bug-reports',
+        loadChildren: () => import('../features/bug-reports/bug-reports.routes').then((m) => m.BUG_REPORTS_ROUTES),
       },
       {
         path: 'tricks',

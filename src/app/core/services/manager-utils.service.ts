@@ -14,6 +14,10 @@ export class ManagerUtilsService {
   readonly reviewsModerateEndpoint = this.env.reviewsModerateEndpoint;
   readonly reportsListEndpoint = this.env.reportsListEndpoint;
   readonly reportsModerateEndpoint = this.env.reportsModerateEndpoint;
+  readonly bugReportsListEndpoint = this.env.bugReportsListEndpoint;
+  readonly bugReportsModerateEndpoint = this.env.bugReportsModerateEndpoint;
+  readonly photosListEndpoint = this.env.photosListEndpoint;
+  readonly photosModerateEndpoint = this.env.photosModerateEndpoint;
   readonly tricksWriteEndpoint = this.env.tricksWriteEndpoint;
   readonly tricksDeleteEndpoint = this.env.tricksDeleteEndpoint;
   readonly localToolSecret = this.env.localToolSecret;

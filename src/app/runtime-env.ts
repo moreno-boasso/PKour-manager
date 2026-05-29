@@ -10,6 +10,10 @@ declare global {
       PKOUR_REVIEWS_MODERATE_ENDPOINT?: string;
       PKOUR_REPORTS_LIST_ENDPOINT?: string;
       PKOUR_REPORTS_MODERATE_ENDPOINT?: string;
+      PKOUR_BUG_REPORTS_LIST_ENDPOINT?: string;
+      PKOUR_BUG_REPORTS_MODERATE_ENDPOINT?: string;
+      PKOUR_PHOTOS_LIST_ENDPOINT?: string;
+      PKOUR_PHOTOS_MODERATE_ENDPOINT?: string;
       PKOUR_TRICKS_WRITE_ENDPOINT?: string;
       PKOUR_TRICKS_DELETE_ENDPOINT?: string;
       LOCAL_TOOL_SECRET?: string;
@@ -31,6 +35,10 @@ export function getRuntimeEnv() {
     reviewsModerateEndpoint: (env.PKOUR_REVIEWS_MODERATE_ENDPOINT ?? '/reviews/moderation').trim(),
     reportsListEndpoint: (env.PKOUR_REPORTS_LIST_ENDPOINT ?? '/reports/moderation').trim(),
     reportsModerateEndpoint: (env.PKOUR_REPORTS_MODERATE_ENDPOINT ?? '/reports/moderation').trim(),
+    bugReportsListEndpoint: (env.PKOUR_BUG_REPORTS_LIST_ENDPOINT ?? '/bug-reports/moderation').trim(),
+    bugReportsModerateEndpoint: (env.PKOUR_BUG_REPORTS_MODERATE_ENDPOINT ?? '/bug-reports/moderation').trim(),
+    photosListEndpoint: (env.PKOUR_PHOTOS_LIST_ENDPOINT ?? '/photos/moderation').trim(),
+    photosModerateEndpoint: (env.PKOUR_PHOTOS_MODERATE_ENDPOINT ?? '/photos/moderation').trim(),
     tricksWriteEndpoint: (env.PKOUR_TRICKS_WRITE_ENDPOINT ?? '/tricks/upsert-local').trim(),
     tricksDeleteEndpoint: (env.PKOUR_TRICKS_DELETE_ENDPOINT ?? '/tricks/delete-local').trim(),
     localToolSecret: (env.LOCAL_TOOL_SECRET ?? env.PKOUR_LOCAL_TOOL_SECRET ?? '').trim(),

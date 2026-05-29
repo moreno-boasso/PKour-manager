@@ -15,10 +15,11 @@ interface ShellMenuItem {
 export class ManagerShellComponent {
   protected readonly menuItems: ShellMenuItem[] = [
     { path: '/spots', label: 'Approvazione Spot', enabled: true },
+    { path: '/photos', label: 'Approvazione Foto', enabled: true },
     { path: '/reviews', label: 'Approvazione Recensioni', enabled: true },
     { path: '/reports', label: 'Approvazione Segnalazioni', enabled: true },
+    { path: '/bug-reports', label: 'Segnalazioni Bug', enabled: true },
     { path: '/tricks', label: 'Gestione Tricks', enabled: true },
-    { path: '#', label: 'Approvazione Foto', enabled: false },
   ];
 
   protected isSidebarOpen = false;
@@ -38,11 +39,17 @@ export class ManagerShellComponent {
     if (url.startsWith('/spots')) {
       return 'Approvazione Spot';
     }
+    if (url.startsWith('/photos')) {
+      return 'Approvazione Foto';
+    }
     if (url.startsWith('/reviews')) {
       return 'Approvazione Recensioni';
     }
     if (url.startsWith('/reports')) {
       return 'Approvazione Segnalazioni';
+    }
+    if (url.startsWith('/bug-reports')) {
+      return 'Segnalazioni Bug';
     }
     if (url.startsWith('/tricks')) {
       return 'Gestione Tricks';

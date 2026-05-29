@@ -8,6 +8,10 @@ window.__PKOUR_ENV__ = {
   "PKOUR_REVIEWS_MODERATE_ENDPOINT": "/reviews/moderation",
   "PKOUR_REPORTS_LIST_ENDPOINT": "/reports/moderation",
   "PKOUR_REPORTS_MODERATE_ENDPOINT": "/reports/moderation",
+  "PKOUR_BUG_REPORTS_LIST_ENDPOINT": "/bug-reports/moderation",
+  "PKOUR_BUG_REPORTS_MODERATE_ENDPOINT": "/bug-reports/moderation",
+  "PKOUR_PHOTOS_LIST_ENDPOINT": "/photos/moderation",
+  "PKOUR_PHOTOS_MODERATE_ENDPOINT": "/photos/moderation",
   "PKOUR_TRICKS_WRITE_ENDPOINT": "/tricks/upsert-local",
   "PKOUR_TRICKS_DELETE_ENDPOINT": "/tricks/delete-local"
 };

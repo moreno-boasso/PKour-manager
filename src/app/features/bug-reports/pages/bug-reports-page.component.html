@@ -1,0 +1,58 @@
+@if (statusMessage) {
+  <div class="status-banner" [class.status-success]="statusType === 'success'" [class.status-error]="statusType === 'error'" [class.status-info]="statusType === 'info'">
+    {{ statusMessage }}
+  </div>
+}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3 class="panel-kicker">Segnalazioni Bug · {{ reportStatusLabel }}</h3>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="refreshReports()" [disabled]="isReportsLoading">
+        {{ isReportsLoading ? 'Carico...' : 'Aggiorna' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-grid">
+    <input type="text" class="field-input" placeholder="Cerca testo, device, reporter o area..." [(ngModel)]="reportSearchText" (keyup.enter)="searchReports()" />
+    <div class="spots-toolbar">
+      <select class="field-input" [(ngModel)]="selectedReportStatus" (ngModelChange)="searchReports()">
+        <option value="open">Aperte</option>
+        <option value="resolved">Risolte</option>
+        <option value="all">Tutte</option>
+      </select>
+      <button type="button" class="btn btn-ghost" (click)="searchReports()" [disabled]="isReportsLoading">Cerca</button>
+    </div>
+  </div>
+
+  <div class="spot-list-grid review-list-grid">
+    @for (report of reports; track report.id) {
+      <article class="spot-card review-card">
+        <div class="spot-card-head">
+          <p class="spot-name">{{ reportAreaLabel(report) }}</p>
+          <span class="quality-pill" [class.quality-ok]="report.status === 'resolved'" [class.quality-warn]="report.status === 'open'">{{ report.status }}</span>
+        </div>
+        <p class="spot-meta">Bug #{{ report.id }} · {{ reportAuthorLabel(report) }} · {{ formatDateTime(report.created_at) }}</p>
+        <p class="review-rating">App v{{ report.app_version || 'n/d' }} · Device: {{ reportDeviceInfoPreview(report.device_info) }}</p>
+        <p class="review-comment">{{ reportMessagePreview(report.message) }}</p>
+        <div class="spot-actions">
+          <button type="button" class="btn btn-primary" (click)="moderateReport(report, 'resolved')" [disabled]="reportActionTargetId === report.id || isReportActionLoading || report.status === 'resolved'">
+            {{ reportActionTargetId === report.id && isReportActionLoading ? 'Operazione...' : 'Risolto' }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="moderateReport(report, 'open')" [disabled]="reportActionTargetId === report.id || isReportActionLoading || report.status === 'open'">
+            {{ reportActionTargetId === report.id && isReportActionLoading ? 'Operazione...' : 'Riapri' }}
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">Nessuna segnalazione bug trovata con i filtri attivi.</p>
+    }
+  </div>
+
+  <div class="spots-pagination">
+    <button type="button" class="btn btn-ghost" (click)="goToReportsPage(reportsPage - 1)" [disabled]="reportsPage <= 1 || isReportsLoading">← Prev</button>
+    <span class="spots-page-label">Pagina {{ reportsPage }} / {{ reportsTotalPages }} · Totale {{ reportsTotal }}</span>
+    <button type="button" class="btn btn-ghost" (click)="goToReportsPage(reportsPage + 1)" [disabled]="reportsPage >= reportsTotalPages || isReportsLoading">Next →</button>
+  </div>
+</section>
