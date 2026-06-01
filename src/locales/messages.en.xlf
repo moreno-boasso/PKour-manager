@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-US" target-language="en" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="shell.manager" datatype="html">
+        <source>Manager</source>
+        <target>Manager</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/shell/shell.component.ts</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.title" datatype="html">
+        <source>PKour Manager</source>
+        <target>PKour Manager</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.subtitle" datatype="html">
+        <source>Accesso riservato agli amministratori</source>
+        <target>Restricted access for administrators</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">22,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.email" datatype="html">
+        <source>Email</source>
+        <target>Email</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">35,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.password" datatype="html">
+        <source>Password</source>
+        <target>Password</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">47,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.submit" datatype="html">
+        <source>Accedi</source>
+        <target>Sign in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="login.error" datatype="html">
+        <source>Credenziali non valide</source>
+        <target>Invalid credentials</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/login/login.component.ts</context>
+          <context context-type="linenumber">88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dashboard.title" datatype="html">
+        <source>Dashboard</source>
+        <target>Dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dashboard.subtitle" datatype="html">
+        <source>Panoramica moderazione contenuti PKour</source>
+        <target>PKour content moderation overview</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">16,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dashboard.pending_action" datatype="html">
+        <source>Richiede azione</source>
+        <target>Requires action</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">42,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="dashboard.all_clear" datatype="html">
+        <source>Tutto in ordine</source>
+        <target>All clear</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/dashboard/dashboard.component.ts</context>
+          <context context-type="linenumber">44,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="photos.title" datatype="html">
+        <source>Moderazione Foto</source>
+        <target>Photo Moderation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/photos/photos-moderation/photos-moderation.component.ts</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="photos.empty" datatype="html">
+        <source>Nessuna foto in questa categoria</source>
+        <target>No photos in this category</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/photos/photos-moderation/photos-moderation.component.ts</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.prev" datatype="html">
+        <source>← Precedente</source>
+        <target>← Previous</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/photos/photos-moderation/photos-moderation.component.ts</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">78,79</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">93,94</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">101,102</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">103,104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.next" datatype="html">
+        <source>Successivo →</source>
+        <target>Next →</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/photos/photos-moderation/photos-moderation.component.ts</context>
+          <context context-type="linenumber">99,100</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">94,95</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">109,110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reports.title" datatype="html">
+        <source>Moderazione Segnalazioni</source>
+        <target>Reports Moderation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reports.empty" datatype="html">
+        <source>Nessuna segnalazione in questa categoria</source>
+        <target>No reports in this category</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">44,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reports.resolve" datatype="html">
+        <source>Risolvi</source>
+        <target>Resolve</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">66,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reports.delete" datatype="html">
+        <source>Elimina</source>
+        <target>Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reports/reports-moderation/reports-moderation.component.ts</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reviews.title" datatype="html">
+        <source>Moderazione Recensioni</source>
+        <target>Reviews Moderation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reviews.empty" datatype="html">
+        <source>Nessuna recensione in questa categoria</source>
+        <target>No reviews in this category</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">46,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reviews.approve" datatype="html">
+        <source>Approva</source>
+        <target>Approve</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">77,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reviews.reject" datatype="html">
+        <source>Rifiuta</source>
+        <target>Reject</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">80,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="reviews.delete" datatype="html">
+        <source>Elimina</source>
+        <target>Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/reviews/reviews-moderation/reviews-moderation.component.ts</context>
+          <context context-type="linenumber">82,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.title" datatype="html">
+        <source>Moderazione Spot</source>
+        <target>Spot Moderation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.search" datatype="html">
+        <source>Cerca spot...</source>
+        <target>Search spots...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">37,38</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.empty" datatype="html">
+        <source>Nessuno spot in questa categoria</source>
+        <target>No spots in this category</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">59,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.approve" datatype="html">
+        <target>Approve</target>
+        <source>Approva</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">138,140</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.reject" datatype="html">
+        <target>Reject</target>
+        <source>Rifiuta</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">141,143</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.detail" datatype="html">
+        <source>Dettagli</source>
+        <target>Details</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">88,89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.tipo" datatype="html">
+        <source>Tipo:</source>
+        <target>Type:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.features" datatype="html">
+        <source>Features:</source>
+        <target>Features:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.visitors" datatype="html">
+        <source>Visitatori:</source>
+        <target>Visitors:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="spots.created_by" datatype="html">
+        <source>Creato da:</source>
+        <target>Created by:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/spots/spots-moderation/spots-moderation.component.ts</context>
+          <context context-type="linenumber">132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.title" datatype="html">
+        <source>Tricks</source>
+        <target>Tricks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">16,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.search" datatype="html">
+        <source>Cerca trick...</source>
+        <target>Search tricks...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">27,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.all_levels" datatype="html">
+        <source>Tutti i livelli</source>
+        <target>All levels</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">36,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.empty" datatype="html">
+        <source>Nessun trick trovato</source>
+        <target>No tricks found</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">60,62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.video" datatype="html">
+        <source>Video</source>
+        <target>Video</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">84,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="tricks.delete" datatype="html">
+        <source>Elimina</source>
+        <target>Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/tricks/tricks-list/tricks-list.component.ts</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

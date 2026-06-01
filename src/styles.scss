@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #F8FAF9;
+    color: #1a2e25;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #0B6E4F;
+    color: white;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: background-color 0.15s;
+    cursor: pointer;
+    border: none;
+    &:hover { background-color: #095C41; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: #0B6E4F;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: background-color 0.15s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    &:hover { background-color: #E6F4F0; }
+    &:disabled { opacity: 0.5; }
+  }
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #EF4444;
+    color: white;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: background-color 0.15s;
+    border: none;
+    cursor: pointer;
+    &:hover { background-color: #DC2626; }
+    &:disabled { opacity: 0.5; }
+  }
+  .card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid #E2E8E5;
+  }
+  .badge-pending {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #FEF3C7;
+    color: #B45309;
+  }
+  .badge-approved {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #D1FAE5;
+    color: #065F46;
+  }
+  .badge-rejected {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #FEE2E2;
+    color: #991B1B;
+  }
+}
