@@ -99,6 +99,32 @@ body {
 .sidebar-nav {
   display: grid;
   gap: 8px;
+  flex: 1;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--pk-border);
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--pk-border);
+  border-radius: 8px;
+  color: var(--pk-text-dim);
+  font-size: 13px;
+  font-family: "Space Mono", monospace;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  border-color: var(--pk-accent);
+  color: var(--pk-accent-bright);
 }
 
 .menu-item {

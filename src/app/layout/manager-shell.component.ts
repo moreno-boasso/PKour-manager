@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ManagerUtilsService } from '../core/services/manager-utils.service';
 
 interface ShellMenuItem {
   path: string;
@@ -24,7 +25,10 @@ export class ManagerShellComponent {
 
   protected isSidebarOpen = false;
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly utils: ManagerUtilsService,
+  ) {}
 
   protected toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
@@ -32,6 +36,11 @@ export class ManagerShellComponent {
 
   protected closeSidebarOnMobile(): void {
     this.isSidebarOpen = false;
+  }
+
+  protected logout(): void {
+    this.utils.clearToken();
+    this.router.navigateByUrl('/login');
   }
 
   protected get activeModuleTitle(): string {

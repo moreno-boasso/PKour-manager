@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { getRuntimeEnv } from '../../runtime-env';
 
+const AUTH_TOKEN_KEY = 'pkour_manager_token';
+
 @Injectable({ providedIn: 'root' })
 export class ManagerUtilsService {
   private readonly env = getRuntimeEnv();
 
   readonly apiBaseUrl = this.env.apiBaseUrl;
-  readonly spotsApiBaseUrl = this.env.spotsApiBaseUrl || this.env.apiBaseUrl;
   readonly spotsListEndpoint = this.env.spotsListEndpoint;
   readonly spotsModerateEndpoint = this.env.spotsModerateEndpoint;
   readonly spotsDetailEndpoint = this.env.spotsDetailEndpoint;
@@ -20,33 +21,40 @@ export class ManagerUtilsService {
   readonly photosModerateEndpoint = this.env.photosModerateEndpoint;
   readonly tricksWriteEndpoint = this.env.tricksWriteEndpoint;
   readonly tricksDeleteEndpoint = this.env.tricksDeleteEndpoint;
-  readonly localToolSecret = this.env.localToolSecret;
 
   buildApiUrl(pathOrUrl: string): string {
     if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
       return pathOrUrl;
     }
     const base = this.apiBaseUrl.replace(/\/+$/, '');
-    const path = pathOrUrl.replace(/^\/+/, '');
-    return `${base}/${path}`;
+    const p = pathOrUrl.replace(/^\/+/, '');
+    return `${base}/${p}`;
   }
 
   buildSpotsUrl(pathOrUrl: string): string {
-    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
-      return pathOrUrl;
-    }
-    const base = this.spotsApiBaseUrl.replace(/\/+$/, '');
-    const path = pathOrUrl.replace(/^\/+/, '');
-    return `${base}/${path}`;
+    return this.buildApiUrl(pathOrUrl);
+  }
+
+  getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) return {};
+    return { Authorization: `Bearer ${token}` };
   }
 
   getToolHeaders(): Record<string, string> {
-    if (!this.localToolSecret) {
-      return {};
-    }
-    return {
-      'x-local-tool-secret': this.localToolSecret,
-    };
+    return this.getAuthHeaders();
+  }
+
+  saveToken(token: string): void {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+  }
+
+  clearToken(): void {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem(AUTH_TOKEN_KEY);
   }
 
   extractHttpError(error: unknown, fallback: string): string {
