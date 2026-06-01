@@ -6,7 +6,7 @@ import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 
-type Tab = 'pending' | 'approved' | 'rejected';
+type Tab = 'pending' | 'approved';
 
 @Component({
   selector: 'app-photos-moderation',
@@ -25,8 +25,8 @@ type Tab = 'pending' | 'approved' | 'rejected';
             <button (click)="bulkApprove()" class="btn-primary py-1.5 px-3 text-sm">
               Approva ({{ selected().size }})
             </button>
-            <button (click)="bulkReject()" class="btn-danger py-1.5 px-3 text-sm">
-              Rifiuta ({{ selected().size }})
+            <button (click)="bulkDelete()" class="btn-danger py-1.5 px-3 text-sm">
+              Elimina ({{ selected().size }})
             </button>
           </div>
         }
@@ -78,14 +78,10 @@ type Tab = 'pending' | 'approved' | 'rejected';
                 </div>
               </div>
               <!-- Quick actions -->
-              @if (!selected().has(photo.id)) {
+              @if (!selected().has(photo.id) && photo.status === 'pending') {
                 <div class="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" (click)="$event.stopPropagation()">
-                  @if (photo.status !== 'approved') {
-                    <button (click)="approve(photo)" class="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center" title="Approva">✓</button>
-                  }
-                  @if (photo.status !== 'rejected') {
-                    <button (click)="reject(photo)" class="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" title="Rifiuta">✕</button>
-                  }
+                  <button (click)="approve(photo)" class="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center" title="Approva">✓</button>
+                  <button (click)="deletePhoto(photo)" class="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" title="Elimina">✕</button>
                 </div>
               }
             </div>
@@ -119,7 +115,6 @@ export class PhotosModerationComponent implements OnInit {
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvate' },
-    { value: 'rejected', label: 'Rifiutate' },
   ];
 
   ngOnInit(): void { this.load(); }
@@ -150,11 +145,12 @@ export class PhotosModerationComponent implements OnInit {
       error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'approvazione'); },
     });
   }
-  reject(p: ManagerPhoto): void {
+  deletePhoto(p: ManagerPhoto): void {
+    if (!confirm('Eliminare definitivamente questa foto?\n\nQuesta azione non può essere annullata.')) return;
     this.loadingSvc.show();
-    this.api.patchPhotoStatus(p.id, 'rejected').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success('Foto rifiutata'); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante il rifiuto'); },
+    this.api.deletePhoto(p.id).subscribe({
+      next: () => { this.loadingSvc.hide(); this.toast.success('Foto eliminata'); this.load(); },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
     });
   }
   bulkApprove(): void {
@@ -165,18 +161,24 @@ export class PhotosModerationComponent implements OnInit {
       error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'approvazione bulk'); },
     });
   }
-  bulkReject(): void {
+  bulkDelete(): void {
+    if (!confirm(`Eliminare definitivamente ${this.selected().size} foto?\n\nQuesta azione non può essere annullata.`)) return;
     const count = this.selected().size;
     this.loadingSvc.show();
-    this.api.bulkPatchPhotoStatus([...this.selected()], 'rejected').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success(`${count} foto rifiutate`); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante il rifiuto bulk'); },
+    // Eliminiamo una per una per sicurezza
+    const ids = [...this.selected()];
+    let completed = 0;
+    let errors = 0;
+    ids.forEach(id => {
+      this.api.deletePhoto(id).subscribe({
+        next: () => { completed++; if (completed + errors === count) { this.loadingSvc.hide(); this.toast.success(`${completed} foto eliminate`); this.load(); } },
+        error: () => { errors++; if (completed + errors === count) { this.loadingSvc.hide(); this.toast.success(`${completed} foto eliminate`); this.load(); } },
+      });
     });
   }
 
   badgeClass(status: ModerationStatus): string {
     if (status === 'pending') return 'badge-pending';
-    if (status === 'approved') return 'badge-approved';
-    return 'badge-rejected';
+    return 'badge-approved';
   }
 }

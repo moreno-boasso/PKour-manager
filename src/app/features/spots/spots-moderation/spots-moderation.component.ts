@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService } from '../../../core/api/admin-api.service';
+import { AdminApiService, SortField, SortOrder } from '../../../core/api/admin-api.service';
 import { AdminSpot, AdminSpotDetail, ModerationStatus } from '../../../shared/models/admin.model';
 import { SwipeActionDirective } from '../../../shared/directives/swipe-action.directive';
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 
-type Tab = 'pending' | 'approved' | 'rejected';
+type Tab = 'pending' | 'approved';
 
 @Component({
   selector: 'app-spots-moderation',
@@ -42,6 +42,23 @@ type Tab = 'pending' | 'approved' | 'rejected';
           i18n-placeholder="@@spots.search"
           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none w-56"
         />
+        <!-- Sorting -->
+        <select
+          [(ngModel)]="sortBy"
+          (change)="onSortChange()"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
+        >
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        <button
+          (click)="toggleSortOrder()"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          [title]="sortOrder() === 'asc' ? 'Crescente' : 'Decrescente'"
+        >
+          {{ sortOrder() === 'asc' ? '↑' : '↓' }}
+        </button>
       </div>
 
       <!-- Skeleton -->
@@ -103,11 +120,9 @@ type Tab = 'pending' | 'approved' | 'rejected';
                 <p class="text-xs text-gray-400 mt-0.5">{{ spot.tipo ?? '—' }}</p>
                 <!-- Actions -->
                 <div class="flex gap-2 mt-3">
-                  @if (spot.status !== 'approved') {
+                  @if (spot.status === 'pending') {
                     <button (click)="approve(spot)" class="btn-primary py-1.5 px-3 text-xs flex-1 justify-center" i18n="@@spots.approve">Approva</button>
-                  }
-                  @if (spot.status !== 'rejected') {
-                    <button (click)="reject(spot)" class="btn-danger py-1.5 px-3 text-xs flex-1 justify-center" i18n="@@spots.reject">Rifiuta</button>
+                    <button (click)="reject(spot)" class="btn-danger py-1.5 px-3 text-xs flex-1 justify-center" i18n="@@spots.reject">Elimina</button>
                   }
                   <button (click)="openDetail(spot)" class="btn-ghost py-1.5 px-3 text-xs" i18n="@@spots.detail">Dettagli</button>
                 </div>
@@ -158,11 +173,9 @@ type Tab = 'pending' | 'approved' | 'rejected';
             </div>
             <!-- Actions -->
             <div class="flex gap-2 pt-2">
-              @if (selectedDetail()!.status !== 'approved') {
+              @if (selectedDetail()!.status === 'pending') {
                 <button (click)="approveDetail()" class="btn-primary py-2 px-4 flex-1 justify-center" i18n="@@spots.approve">Approva</button>
-              }
-              @if (selectedDetail()!.status !== 'rejected') {
-                <button (click)="rejectDetail()" class="btn-danger py-2 px-4 flex-1 justify-center" i18n="@@spots.reject">Rifiuta</button>
+                <button (click)="rejectDetail()" class="btn-danger py-2 px-4 flex-1 justify-center" i18n="@@spots.reject">Elimina</button>
               }
             </div>
           </div>
@@ -185,13 +198,20 @@ export class SpotsModerationComponent implements OnInit {
   readonly swipingId = signal<number | null>(null);
   readonly swipeDir = signal<'left' | 'right' | null>(null);
   readonly pageSize = 24;
+  readonly sortBy = signal<SortField>('created_at');
+  readonly sortOrder = signal<SortOrder>('desc');
 
   searchQuery = '';
+
+  readonly sortOptions: { value: SortField; label: string }[] = [
+    { value: 'created_at', label: 'Data creazione' },
+    { value: 'updated_at', label: 'Data aggiornamento' },
+    { value: 'nome', label: 'Nome' },
+  ];
 
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvati' },
-    { value: 'rejected', label: 'Rifiutati' },
   ];
 
   ngOnInit(): void {
@@ -200,7 +220,14 @@ export class SpotsModerationComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.api.getSpots(this.activeTab(), this.pageSize, this.offset(), this.searchQuery || undefined).subscribe({
+    this.api.getSpots(
+      this.activeTab(),
+      this.pageSize,
+      this.offset(),
+      this.searchQuery || undefined,
+      this.sortBy(),
+      this.sortOrder()
+    ).subscribe({
       next: (res) => {
         this.spots.set(res.data);
         this.total.set(res.pagination.total);
@@ -208,6 +235,16 @@ export class SpotsModerationComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  onSortChange(): void {
+    this.offset.set(0);
+    this.load();
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder.update(o => o === 'asc' ? 'desc' : 'asc');
+    this.load();
   }
 
   setTab(tab: Tab): void {
@@ -240,11 +277,11 @@ export class SpotsModerationComponent implements OnInit {
   }
 
   reject(spot: AdminSpot): void {
-    if (!confirm(`Rifiutare "${spot.nome}"?`)) return;
+    if (!confirm(`Eliminare definitivamente "${spot.nome}"?\n\nQuesta azione non può essere annullata.`)) return;
     this.loadingSvc.show();
-    this.api.patchSpotStatus(spot.id, 'rejected').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success(`"${spot.nome}" rifiutato`); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante il rifiuto'); },
+    this.api.deleteSpot(spot.id).subscribe({
+      next: () => { this.loadingSvc.hide(); this.toast.success(`"${spot.nome}" eliminato`); this.load(); },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
     });
   }
 
@@ -268,11 +305,11 @@ export class SpotsModerationComponent implements OnInit {
 
   rejectDetail(): void {
     const detail = this.selectedDetail();
-    if (!detail || !confirm(`Rifiutare "${detail.nome}"?`)) return;
+    if (!detail || !confirm(`Eliminare definitivamente "${detail.nome}"?\n\nQuesta azione non può essere annullata.`)) return;
     this.loadingSvc.show();
-    this.api.patchSpotStatus(detail.id, 'rejected').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success(`"${detail.nome}" rifiutato`); this.selectedDetail.set(null); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante il rifiuto'); },
+    this.api.deleteSpot(detail.id).subscribe({
+      next: () => { this.loadingSvc.hide(); this.toast.success(`"${detail.nome}" eliminato`); this.selectedDetail.set(null); this.load(); },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
     });
   }
 
@@ -295,9 +332,9 @@ export class SpotsModerationComponent implements OnInit {
     setTimeout(() => {
       this.swipingId.set(null);
       this.swipeDir.set(null);
-      this.api.patchSpotStatus(spot.id, 'rejected').subscribe({
-        next: () => { this.toast.success(`"${spot.nome}" rifiutato`); this.load(); },
-        error: () => this.toast.error('Errore durante il rifiuto'),
+      this.api.deleteSpot(spot.id).subscribe({
+        next: () => { this.toast.success(`"${spot.nome}" eliminato`); this.load(); },
+        error: () => this.toast.error('Errore durante l\'eliminazione'),
       });
     }, 350);
   }
@@ -305,7 +342,6 @@ export class SpotsModerationComponent implements OnInit {
   badgeClass(status: ModerationStatus): string {
     const base = 'text-xs font-semibold px-2 py-0.5 rounded-full';
     if (status === 'pending') return `${base} badge-pending`;
-    if (status === 'approved') return `${base} badge-approved`;
-    return `${base} badge-rejected`;
+    return `${base} badge-approved`;
   }
 }

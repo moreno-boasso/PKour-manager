@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AdminApiService } from '../../../core/api/admin-api.service';
+import { AdminApiService, SortField, SortOrder } from '../../../core/api/admin-api.service';
 import { ManagerReview, ModerationStatus } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 
-type Tab = 'pending' | 'approved' | 'rejected';
+type Tab = 'pending' | 'approved';
 
 @Component({
   selector: 'app-reviews-moderation',
@@ -73,13 +73,10 @@ type Tab = 'pending' | 'approved' | 'rejected';
                 </div>
                 <!-- Actions -->
                 <div class="flex flex-col gap-1.5 shrink-0">
-                  @if (review.status !== 'approved') {
+                  @if (review.status === 'pending') {
                     <button (click)="approve(review)" class="btn-primary py-1 px-3 text-xs justify-center" i18n="@@reviews.approve">Approva</button>
+                    <button (click)="reject(review)" class="btn-danger py-1 px-3 text-xs justify-center" i18n="@@reviews.reject">Elimina</button>
                   }
-                  @if (review.status !== 'rejected') {
-                    <button (click)="reject(review)" class="btn-danger py-1 px-3 text-xs justify-center" i18n="@@reviews.reject">Rifiuta</button>
-                  }
-                  <button (click)="deleteReview(review)" class="btn-ghost py-1 px-3 text-xs text-red-500 justify-center" i18n="@@reviews.delete">Elimina</button>
                 </div>
               </div>
             </div>
@@ -113,7 +110,6 @@ export class ReviewsModerationComponent implements OnInit {
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvate' },
-    { value: 'rejected', label: 'Rifiutate' },
   ];
 
   ngOnInit(): void { this.load(); }
@@ -138,14 +134,7 @@ export class ReviewsModerationComponent implements OnInit {
     });
   }
   reject(r: ManagerReview): void {
-    this.loadingSvc.show();
-    this.api.patchReviewStatus(r.user_id, r.spot_id, 'rejected').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success('Recensione rifiutata'); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante il rifiuto'); },
-    });
-  }
-  deleteReview(r: ManagerReview): void {
-    if (!confirm('Eliminare questa recensione?')) return;
+    if (!confirm('Eliminare definitivamente questa recensione?\n\nQuesta azione non può essere annullata.')) return;
     this.loadingSvc.show();
     this.api.deleteReview(r.user_id, r.spot_id).subscribe({
       next: () => { this.loadingSvc.hide(); this.toast.success('Recensione eliminata'); this.load(); },
@@ -155,7 +144,6 @@ export class ReviewsModerationComponent implements OnInit {
 
   badgeClass(status: ModerationStatus): string {
     if (status === 'pending') return 'badge-pending';
-    if (status === 'approved') return 'badge-approved';
-    return 'badge-rejected';
+    return 'badge-approved';
   }
 }

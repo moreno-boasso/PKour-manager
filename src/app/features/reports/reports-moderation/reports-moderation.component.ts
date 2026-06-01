@@ -6,7 +6,7 @@ import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 
-type Tab = 'pending' | 'resolved';
+type Tab = 'pending' | 'approved';
 
 @Component({
   selector: 'app-reports-moderation',
@@ -53,7 +53,7 @@ type Tab = 'pending' | 'resolved';
                     <span class="font-semibold text-sm text-gray-900">{{ report.user_username ?? report.user_nome ?? report.reported_by_user_id }}</span>
                     <span class="text-gray-300">·</span>
                     <span class="text-xs text-gray-500">{{ report.spot_nome }}</span>
-                    <span [class]="report.status === 'pending' ? 'badge-pending' : 'badge-approved'">{{ report.status }}</span>
+                    <span [class]="report.status === 'pending' ? 'badge-pending' : 'badge-approved'">{{ report.status === 'approved' ? 'Approvata' : 'In attesa' }}</span>
                   </div>
                   <p class="text-xs font-medium text-gray-700 mt-1">Motivo: {{ report.motivo }}</p>
                   @if (report.descrizione) {
@@ -63,9 +63,9 @@ type Tab = 'pending' | 'resolved';
                 </div>
                 <div class="flex flex-col gap-1.5 shrink-0">
                   @if (report.status === 'pending') {
-                    <button (click)="resolve(report)" class="btn-primary py-1 px-3 text-xs justify-center" i18n="@@reports.resolve">Risolvi</button>
+                    <button (click)="approve(report)" class="btn-primary py-1 px-3 text-xs justify-center" i18n="@@reports.approve">Approva</button>
+                    <button (click)="deleteReport(report)" class="btn-danger py-1 px-3 text-xs justify-center" i18n="@@reports.reject">Elimina</button>
                   }
-                  <button (click)="deleteReport(report)" class="btn-ghost py-1 px-3 text-xs text-red-500 justify-center" i18n="@@reports.delete">Elimina</button>
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@ export class ReportsModerationComponent implements OnInit {
 
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
-    { value: 'resolved', label: 'Risolte' },
+    { value: 'approved', label: 'Approvate' },
   ];
 
   ngOnInit(): void { this.load(); }
@@ -114,11 +114,11 @@ export class ReportsModerationComponent implements OnInit {
   prevPage(): void { this.offset.update(v => Math.max(0, v - this.pageSize)); this.load(); }
   nextPage(): void { this.offset.update(v => v + this.pageSize); this.load(); }
 
-  resolve(r: ManagerReport): void {
+  approve(r: ManagerReport): void {
     this.loadingSvc.show();
-    this.api.patchReportStatus(r.id, 'resolved').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success('Segnalazione risolta'); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante la risoluzione'); },
+    this.api.patchReportStatus(r.id, 'approved').subscribe({
+      next: () => { this.loadingSvc.hide(); this.toast.success('Segnalazione approvata'); this.load(); },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'approvazione'); },
     });
   }
   deleteReport(r: ManagerReport): void {
