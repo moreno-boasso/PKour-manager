@@ -46,10 +46,9 @@ interface EditForm {
           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
         >
           <option value="" i18n="@@tricks.all_levels">Tutti i livelli</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-          <option value="expert">Expert</option>
+          <option value="base">Base</option>
+          <option value="intermedio">Intermedio</option>
+          <option value="avanzato">Avanzato</option>
         </select>
       </div>
 
@@ -118,10 +117,9 @@ interface EditForm {
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Difficoltà</label>
                       <select [(ngModel)]="editForm.difficolta" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none">
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                        <option value="expert">Expert</option>
+                        <option value="base">Base</option>
+                        <option value="intermedio">Intermedio</option>
+                        <option value="avanzato">Avanzato</option>
                       </select>
                     </div>
                     <!-- Video URL -->

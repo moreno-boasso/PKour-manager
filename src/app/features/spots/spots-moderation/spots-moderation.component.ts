@@ -44,8 +44,8 @@ type Tab = 'pending' | 'approved';
         />
         <!-- Sorting -->
         <select
-          [(ngModel)]="sortBy"
-          (change)="onSortChange()"
+          [ngModel]="sortBy()"
+          (ngModelChange)="setSortBy($event)"
           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
         >
           @for (opt of sortOptions; track opt.value) {
@@ -237,7 +237,8 @@ export class SpotsModerationComponent implements OnInit {
     });
   }
 
-  onSortChange(): void {
+  setSortBy(value: SortField): void {
+    this.sortBy.set(value);
     this.offset.set(0);
     this.load();
   }

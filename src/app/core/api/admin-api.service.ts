@@ -14,7 +14,7 @@ import {
 } from '../../shared/models/admin.model';
 import { CacheService } from '../cache/cache.service';
 
-export type SortField = 'created_at' | 'updated_at' | 'nome';
+export type SortField = 'created_at' | 'updated_at' | 'nome' | 'qualita' | 'sicurezza' | 'motivo' | 'id';
 export type SortOrder = 'asc' | 'desc';
 
 @Injectable({ providedIn: 'root' })

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AdminApiService } from '../../../core/api/admin-api.service';
+import { FormsModule } from '@angular/forms';
+import { AdminApiService, SortField, SortOrder } from '../../../core/api/admin-api.service';
 import { ManagerReport } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
@@ -12,7 +13,7 @@ type Tab = 'pending' | 'approved';
   selector: 'app-reports-moderation',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, EmptyStateComponent],
   template: `
     <div class="p-6 space-y-6">
       <div>
@@ -20,16 +21,35 @@ type Tab = 'pending' | 'approved';
         <p class="text-sm text-gray-500 mt-1">{{ total() }} segnalazioni trovate</p>
       </div>
 
-      <!-- Tabs -->
-      <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 w-fit">
-        @for (tab of tabs; track tab.value) {
-          <button
-            (click)="setTab(tab.value)"
-            [class]="activeTab() === tab.value
-              ? 'px-4 py-1.5 rounded-md bg-white shadow-sm text-sm font-medium text-gray-900'
-              : 'px-4 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-700'"
-          >{{ tab.label }}</button>
-        }
+      <!-- Tabs + Sort -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+          @for (tab of tabs; track tab.value) {
+            <button
+              (click)="setTab(tab.value)"
+              [class]="activeTab() === tab.value
+                ? 'px-4 py-1.5 rounded-md bg-white shadow-sm text-sm font-medium text-gray-900'
+                : 'px-4 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-700'"
+            >{{ tab.label }}</button>
+          }
+        </div>
+        <!-- Sorting -->
+        <select
+          [ngModel]="sortBy()"
+          (ngModelChange)="setSortBy($event)"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
+        >
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        <button
+          (click)="toggleSortOrder()"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          [title]="sortOrder() === 'asc' ? 'Crescente' : 'Decrescente'"
+        >
+          {{ sortOrder() === 'asc' ? '↑' : '↓' }}
+        </button>
       </div>
 
       @if (loading()) {
@@ -94,17 +114,25 @@ export class ReportsModerationComponent implements OnInit {
   readonly offset = signal(0);
   readonly activeTab = signal<Tab>('pending');
   readonly pageSize = 20;
+  readonly sortBy = signal<SortField>('created_at');
+  readonly sortOrder = signal<SortOrder>('desc');
 
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvate' },
   ];
 
+  readonly sortOptions: { value: SortField; label: string }[] = [
+    { value: 'created_at', label: 'Data creazione' },
+    { value: 'updated_at', label: 'Data aggiornamento' },
+    { value: 'motivo', label: 'Motivo' },
+  ];
+
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading.set(true);
-    this.api.getReports(this.activeTab(), this.pageSize, this.offset()).subscribe({
+    this.api.getReports(this.activeTab(), this.pageSize, this.offset(), this.sortBy(), this.sortOrder()).subscribe({
       next: (res) => { this.reports.set(res.data); this.total.set(res.pagination.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -113,6 +141,17 @@ export class ReportsModerationComponent implements OnInit {
   setTab(tab: Tab): void { this.activeTab.set(tab); this.offset.set(0); this.load(); }
   prevPage(): void { this.offset.update(v => Math.max(0, v - this.pageSize)); this.load(); }
   nextPage(): void { this.offset.update(v => v + this.pageSize); this.load(); }
+
+  setSortBy(value: SortField): void {
+    this.sortBy.set(value);
+    this.offset.set(0);
+    this.load();
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder.update(o => o === 'asc' ? 'desc' : 'asc');
+    this.load();
+  }
 
   approve(r: ManagerReport): void {
     this.loadingSvc.show();
