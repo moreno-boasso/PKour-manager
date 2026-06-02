@@ -7,22 +7,21 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0B6E4F',
-          50: '#E6F4F0',
-          100: '#C2E3D9',
-          200: '#8FCBBA',
-          300: '#5CB39A',
-          400: '#2E9B80',
-          500: '#0B6E4F',
-          600: '#095C41',
-          700: '#074A34',
-          800: '#053826',
-          900: '#022619',
+          DEFAULT: '#126869',
+          light: '#1a9a9c',
+          dim: '#0d4f50',
+          glow: 'rgba(18,104,105,0.4)',
         },
-        surface: {
-          DEFAULT: '#F8FAF9',
-          card: '#FFFFFF',
-          border: '#E2E8E5',
+        bg: {
+          DEFAULT: '#080c0c',
+          2: '#0d1515',
+          3: '#111e1e',
+        },
+        pkour: {
+          text: '#e8f0f0',
+          'text-dim': '#7a9999',
+          'text-muted': '#3d5555',
+          border: 'rgba(18,104,105,0.2)',
         },
         status: {
           pending: '#F59E0B',
@@ -31,11 +30,14 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['Bebas Neue', 'sans-serif'],
+        mono: ['Space Mono', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.04)',
-        'card-hover': '0 4px 12px 0 rgba(0,0,0,0.10)',
+        card: '0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.2)',
+        'card-hover': '0 4px 16px 0 rgba(18,104,105,0.2)',
+        glow: '0 0 24px rgba(18,104,105,0.3)',
       },
     },
   },

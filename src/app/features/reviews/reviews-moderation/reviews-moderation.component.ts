@@ -68,7 +68,7 @@ type Tab = 'pending' | 'approved';
       } @else {
         <div class="space-y-3">
           @for (review of reviews(); track review.user_id + '-' + review.spot_id) {
-            <div class="card p-4">
+            <div class="card p-4 cursor-pointer hover:bg-gray-50" (click)="openReview(review)">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
                   <!-- Header -->
@@ -94,9 +94,9 @@ type Tab = 'pending' | 'approved';
                 <!-- Actions -->
                 <div class="flex flex-col gap-1.5 shrink-0">
                   @if (review.status === 'pending') {
-                    <button (click)="approve(review)" class="btn-primary py-1 px-3 text-xs justify-center" i18n="@@reviews.approve">Approva</button>
-                    <button (click)="reject(review)" class="btn-danger py-1 px-3 text-xs justify-center" i18n="@@reviews.reject">Elimina</button>
+                    <button (click)="approve(review); $event.stopPropagation()" class="btn-primary py-1 px-3 text-xs justify-center" i18n="@@reviews.approve">Approva</button>
                   }
+                  <button (click)="reject(review); $event.stopPropagation()" class="btn-danger py-1 px-3 text-xs justify-center" i18n="@@reviews.delete">Elimina</button>
                 </div>
               </div>
             </div>
@@ -109,6 +109,53 @@ type Tab = 'pending' | 'approved';
           <div class="flex gap-2">
             <button [disabled]="offset() === 0" (click)="prevPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40" i18n="@@common.prev">← Precedente</button>
             <button [disabled]="offset() + pageSize >= total()" (click)="nextPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40" i18n="@@common.next">Successivo →</button>
+          </div>
+        </div>
+      }
+
+      <!-- Detail Modal -->
+      @if (selectedReview(); as r) {
+        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" (click)="closeReview()">
+          <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+            <div class="p-6 space-y-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 class="text-lg font-bold text-gray-900">Dettaglio Recensione</h2>
+                  <p class="text-sm text-gray-500">{{ r.spot_nome }}</p>
+                </div>
+                <button (click)="closeReview()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-sm">Utente:</span>
+                  <span class="text-sm text-gray-700">{{ r.user_username ?? r.user_nome ?? r.user_id }}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="text-sm">Qualità: <strong>{{ r.qualita }}/5</strong></span>
+                  <span class="text-sm">Sicurezza: <strong>{{ r.sicurezza }}/5</strong></span>
+                </div>
+                @if (r.commento) {
+                  <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ r.commento }}</p>
+                  </div>
+                }
+                <div class="text-xs text-gray-400">
+                  Creata: {{ r.created_at | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium">Status:</span>
+                  <span [class]="badgeClass(r.status)">{{ r.status }}</span>
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-2">
+                @if (r.status === 'pending') {
+                  <button (click)="approveDetail()" class="btn-primary flex-1">Approva</button>
+                }
+                <button (click)="deleteDetail()" class="btn-danger flex-1">Elimina</button>
+              </div>
+            </div>
           </div>
         </div>
       }
@@ -128,6 +175,7 @@ export class ReviewsModerationComponent implements OnInit {
   readonly pageSize = 20;
   readonly sortBy = signal<SortField>('created_at');
   readonly sortOrder = signal<SortOrder>('desc');
+  readonly selectedReview = signal<ManagerReview | null>(null);
 
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
@@ -178,6 +226,45 @@ export class ReviewsModerationComponent implements OnInit {
     this.loadingSvc.show();
     this.api.deleteReview(r.user_id, r.spot_id).subscribe({
       next: () => { this.loadingSvc.hide(); this.toast.success('Recensione eliminata'); this.load(); },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
+    });
+  }
+
+  openReview(review: ManagerReview): void {
+    this.selectedReview.set(review);
+  }
+
+  closeReview(): void {
+    this.selectedReview.set(null);
+  }
+
+  approveDetail(): void {
+    const r = this.selectedReview();
+    if (!r) return;
+    this.loadingSvc.show();
+    this.api.patchReviewStatus(r.user_id, r.spot_id, 'approved').subscribe({
+      next: () => {
+        this.loadingSvc.hide();
+        this.toast.success('Recensione approvata');
+        this.selectedReview.set(null);
+        this.load();
+      },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'approvazione'); },
+    });
+  }
+
+  deleteDetail(): void {
+    const r = this.selectedReview();
+    if (!r) return;
+    if (!confirm('Eliminare definitivamente questa recensione?\n\nQuesta azione non può essere annullata.')) return;
+    this.loadingSvc.show();
+    this.api.deleteReview(r.user_id, r.spot_id).subscribe({
+      next: () => {
+        this.loadingSvc.hide();
+        this.toast.success('Recensione eliminata');
+        this.selectedReview.set(null);
+        this.load();
+      },
       error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
     });
   }

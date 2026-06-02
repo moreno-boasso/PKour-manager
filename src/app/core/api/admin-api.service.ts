@@ -39,7 +39,8 @@ export class AdminApiService {
     offset: number,
     spotId?: number,
     sortBy: SortField = 'created_at',
-    sortOrder: SortOrder = 'desc'
+    sortOrder: SortOrder = 'desc',
+    q?: string
   ): Observable<PaginatedResponse<ManagerReview>> {
     let params = new HttpParams()
       .set('status', status)
@@ -48,7 +49,8 @@ export class AdminApiService {
       .set('sort_by', sortBy)
       .set('sort_order', sortOrder);
     if (spotId) params = params.set('spot_id', spotId);
-    const cacheKey = `reviews-${status}-${limit}-${offset}-${spotId || 'all'}-${sortBy}-${sortOrder}`;
+    if (q) params = params.set('q', q);
+    const cacheKey = `reviews-${status}-${limit}-${offset}-${spotId || 'all'}-${sortBy}-${sortOrder}-${q || ''}`;
     return this.cache.wrap(
       cacheKey,
       this.http.get<PaginatedResponse<ManagerReview>>(`${this.base}/api/manager/reviews`, { params }),
@@ -72,15 +74,17 @@ export class AdminApiService {
     limit: number,
     offset: number,
     sortBy: SortField = 'created_at',
-    sortOrder: SortOrder = 'desc'
+    sortOrder: SortOrder = 'desc',
+    q?: string
   ): Observable<PaginatedResponse<ManagerReport>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('status', status)
       .set('limit', limit)
       .set('offset', offset)
       .set('sort_by', sortBy)
       .set('sort_order', sortOrder);
-    const cacheKey = `reports-${status}-${limit}-${offset}-${sortBy}-${sortOrder}`;
+    if (q) params = params.set('q', q);
+    const cacheKey = `reports-${status}-${limit}-${offset}-${sortBy}-${sortOrder}-${q || ''}`;
     return this.cache.wrap(
       cacheKey,
       this.http.get<PaginatedResponse<ManagerReport>>(`${this.base}/api/manager/reports`, { params }),
@@ -105,15 +109,17 @@ export class AdminApiService {
     limit: number,
     offset: number,
     sortBy: SortField = 'created_at',
-    sortOrder: SortOrder = 'desc'
+    sortOrder: SortOrder = 'desc',
+    q?: string
   ): Observable<PaginatedResponse<ManagerPhoto>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('status', status)
       .set('limit', limit)
       .set('offset', offset)
       .set('sort_by', sortBy)
       .set('sort_order', sortOrder);
-    const cacheKey = `photos-${status}-${limit}-${offset}-${sortBy}-${sortOrder}`;
+    if (q) params = params.set('q', q);
+    const cacheKey = `photos-${status}-${limit}-${offset}-${sortBy}-${sortOrder}-${q || ''}`;
     return this.cache.wrap(
       cacheKey,
       this.http.get<PaginatedResponse<ManagerPhoto>>(`${this.base}/api/manager/photos`, { params }),

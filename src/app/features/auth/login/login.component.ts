@@ -10,16 +10,14 @@ import { AuthService } from '../../../core/auth/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 flex items-center justify-center p-4">
+    <div class="min-h-screen flex items-center justify-center p-4" style="background:var(--bg)">
       <div class="w-full max-w-sm">
         <div class="card p-8 space-y-6">
           <!-- Logo -->
-          <div class="text-center space-y-2">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-white text-2xl font-bold shadow-lg">
-              PK
-            </div>
-            <h1 class="text-xl font-bold text-gray-900" i18n="@@login.title">PKour Manager</h1>
-            <p class="text-sm text-gray-500" i18n="@@login.subtitle">Accesso riservato agli amministratori</p>
+          <div class="text-center space-y-3">
+            <img src="PKour Logo royal teal.png" alt="PKour" class="h-10 w-auto mx-auto" />
+            <p class="text-xs font-mono tracking-widest" style="color:var(--text-muted)">MANAGER</p>
+            <p class="text-sm" style="color:var(--text-muted)" i18n="@@login.subtitle">Accesso riservato agli amministratori</p>
           </div>
 
           <!-- Error -->
@@ -32,7 +30,7 @@ import { AuthService } from '../../../core/auth/auth.service';
           <!-- Form -->
           <form (ngSubmit)="onSubmit()" class="space-y-4">
             <div class="space-y-1">
-              <label class="block text-sm font-medium text-gray-700" i18n="@@login.email">Email</label>
+              <label class="block text-sm font-medium" style="color:var(--text-dim)" i18n="@@login.email">Email</label>
               <input
                 type="email"
                 [(ngModel)]="email"
@@ -44,7 +42,7 @@ import { AuthService } from '../../../core/auth/auth.service';
               />
             </div>
             <div class="space-y-1">
-              <label class="block text-sm font-medium text-gray-700" i18n="@@login.password">Password</label>
+              <label class="block text-sm font-medium" style="color:var(--text-dim)" i18n="@@login.password">Password</label>
               <input
                 type="password"
                 [(ngModel)]="password"

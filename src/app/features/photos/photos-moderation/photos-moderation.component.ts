@@ -67,7 +67,7 @@ type Tab = 'pending' | 'approved';
       @if (loading()) {
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
-            <div class="aspect-square rounded-xl bg-gray-200 animate-pulse"></div>
+            <div class="aspect-square rounded-xl animate-pulse" style="background:rgba(18,104,105,0.15)"></div>
           }
         </div>
       } @else if (photos().length === 0) {
@@ -76,10 +76,10 @@ type Tab = 'pending' | 'approved';
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           @for (photo of photos(); track photo.id) {
             <div
-              class="relative group aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer"
+              class="relative group aspect-square rounded-xl overflow-hidden cursor-pointer" style="background:var(--bg3)"
               [class.ring-2]="selected().has(photo.id)"
               [class.ring-primary]="selected().has(photo.id)"
-              (click)="toggleSelect(photo.id)"
+              (click)="!selected().has(photo.id) ? openPhoto(photo) : toggleSelect(photo.id)"
             >
               <img [src]="photo.url" [alt]="photo.spot_nome" class="w-full h-full object-cover" loading="lazy" />
               <!-- Overlay info -->
@@ -100,8 +100,8 @@ type Tab = 'pending' | 'approved';
               <!-- Quick actions -->
               @if (!selected().has(photo.id) && photo.status === 'pending') {
                 <div class="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" (click)="$event.stopPropagation()">
-                  <button (click)="approve(photo)" class="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center" title="Approva">✓</button>
-                  <button (click)="deletePhoto(photo)" class="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" title="Elimina">✕</button>
+                  <button (click)="approve(photo); $event.stopPropagation()" class="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center" title="Approva">✓</button>
+                  <button (click)="deletePhoto(photo); $event.stopPropagation()" class="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" title="Elimina">✕</button>
                 </div>
               }
             </div>
@@ -113,6 +113,48 @@ type Tab = 'pending' | 'approved';
           <div class="flex gap-2">
             <button [disabled]="offset() === 0" (click)="prevPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40" i18n="@@common.prev">← Precedente</button>
             <button [disabled]="offset() + pageSize >= total()" (click)="nextPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40" i18n="@@common.next">Successivo →</button>
+          </div>
+        </div>
+      }
+
+      <!-- Lightbox Full Screen -->
+      @if (selectedPhoto(); as photo) {
+        <!-- Backdrop chiude -->
+        <div class="fixed inset-0 z-50" style="background:rgba(0,0,0,0.96)" (click)="closePhoto()">
+          <!-- Panel — click non propaga -->
+          <div class="flex flex-col h-full" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-3 shrink-0" style="background:rgba(0,0,0,0.5)">
+              <div class="text-sm" style="color:rgba(255,255,255,0.9)">
+                <span class="font-medium">{{ photo.spot_nome }}</span>
+                <span class="mx-2" style="color:rgba(255,255,255,0.4)">•</span>
+                <span style="color:rgba(255,255,255,0.7)">{{ photo.user_username ?? photo.user_nome ?? '—' }}</span>
+              </div>
+              <button
+                (click)="closePhoto()"
+                class="text-2xl px-2 transition-colors"
+                style="color:rgba(255,255,255,0.6)"
+                onmouseenter="this.style.color='white'"
+                onmouseleave="this.style.color='rgba(255,255,255,0.6)'"
+              >×</button>
+            </div>
+
+            <!-- Image -->
+            <div class="flex-1 flex items-center justify-center p-4 min-h-0">
+              <img
+                [src]="photo.url"
+                class="max-h-full max-w-full object-contain rounded-lg"
+                style="max-height:calc(100vh - 120px)"
+              />
+            </div>
+
+            <!-- Actions Footer -->
+            <div class="px-4 py-4 flex items-center justify-center gap-3 shrink-0" style="background:rgba(0,0,0,0.5)">
+              @if (photo.status === 'pending') {
+                <button (click)="approveFromLightbox(photo)" class="btn-primary px-6 py-2">Approva</button>
+              }
+              <button (click)="deleteFromLightbox(photo)" class="btn-danger px-6 py-2">Elimina</button>
+            </div>
           </div>
         </div>
       }
@@ -130,6 +172,7 @@ export class PhotosModerationComponent implements OnInit {
   readonly offset = signal(0);
   readonly activeTab = signal<Tab>('pending');
   readonly selected = signal<Set<number>>(new Set());
+  readonly selectedPhoto = signal<ManagerPhoto | null>(null);
   readonly pageSize = 20;
   readonly sortBy = signal<SortField>('created_at');
   readonly sortOrder = signal<SortOrder>('desc');
@@ -175,6 +218,41 @@ export class PhotosModerationComponent implements OnInit {
     const s = new Set(this.selected());
     s.has(id) ? s.delete(id) : s.add(id);
     this.selected.set(s);
+  }
+
+  openPhoto(photo: ManagerPhoto): void {
+    this.selectedPhoto.set(photo);
+  }
+
+  closePhoto(): void {
+    this.selectedPhoto.set(null);
+  }
+
+  approveFromLightbox(photo: ManagerPhoto): void {
+    this.loadingSvc.show();
+    this.api.patchPhotoStatus(photo.id, 'approved').subscribe({
+      next: () => {
+        this.loadingSvc.hide();
+        this.toast.success('Foto approvata');
+        this.selectedPhoto.set(null);
+        this.load();
+      },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'approvazione'); },
+    });
+  }
+
+  deleteFromLightbox(photo: ManagerPhoto): void {
+    if (!confirm('Eliminare definitivamente questa foto?\n\nQuesta azione non può essere annullata.')) return;
+    this.loadingSvc.show();
+    this.api.deletePhoto(photo.id).subscribe({
+      next: () => {
+        this.loadingSvc.hide();
+        this.toast.success('Foto eliminata');
+        this.selectedPhoto.set(null);
+        this.load();
+      },
+      error: () => { this.loadingSvc.hide(); this.toast.error('Errore durante l\'eliminazione'); },
+    });
   }
 
   approve(p: ManagerPhoto): void {
