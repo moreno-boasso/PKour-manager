@@ -18,36 +18,40 @@ type MapView = 'satellite' | 'streetview';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DecimalPipe, SwipeActionDirective, EmptyStateComponent],
   template: `
-    <div class="p-6 space-y-6">
+    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Moderazione Spot</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Moderazione Spot</h1>
         <p class="text-sm text-gray-500 mt-1">{{ total() }} spot trovati</p>
       </div>
 
-      <!-- Tabs + Search + Sort -->
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
-          @for (tab of tabs; track tab.value) {
-            <button
-              (click)="setTab(tab.value)"
-              [class]="activeTab() === tab.value
-                ? 'px-4 py-1.5 rounded-md bg-white shadow-sm text-sm font-medium text-gray-900'
-                : 'px-4 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-700'"
-            >{{ tab.label }}</button>
-          }
-        </div>
+      <!-- Tabs: tutta larghezza su mobile -->
+      <div class="flex rounded-lg p-0.5 w-full" style="background:var(--bg3);border:1px solid var(--border)">
+        @for (tab of tabs; track tab.value) {
+          <button
+            (click)="setTab(tab.value)"
+            class="flex-1 py-2 rounded-md text-sm font-medium transition-all"
+            [style]="activeTab() === tab.value
+              ? 'background:var(--bg2);color:var(--accent-light);box-shadow:0 1px 4px rgba(0,0,0,0.4)'
+              : 'background:transparent;color:var(--text-muted)'"
+          >{{ tab.label }}</button>
+        }
+      </div>
+
+      <!-- Search + Sort: tutta larghezza su mobile -->
+      <div class="flex gap-2">
         <input
           type="text"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
           (keyup.enter)="search()"
           placeholder="Cerca per nome..."
-          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none w-48"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none flex-1 min-w-0"
         />
         <select
           [ngModel]="sortBy()"
           (ngModelChange)="setSortBy($event)"
           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
+          style="max-width:140px"
         >
           @for (opt of sortOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
@@ -55,7 +59,8 @@ type MapView = 'satellite' | 'streetview';
         </select>
         <button
           (click)="toggleSortOrder()"
-          class="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm shrink-0"
+          style="min-width:2.5rem"
         >{{ sortOrder() === 'asc' ? '↑' : '↓' }}</button>
       </div>
 

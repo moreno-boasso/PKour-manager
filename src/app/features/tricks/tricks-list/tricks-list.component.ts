@@ -22,28 +22,26 @@ interface EditForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, EmptyStateComponent],
   template: `
-    <div class="p-6 space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900" i18n="@@tricks.title">Tricks</h1>
-          <p class="text-sm text-gray-500 mt-1">{{ total() }} tricks totali</p>
-        </div>
+    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900" i18n="@@tricks.title">Tricks</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ total() }} tricks totali</p>
       </div>
 
       <!-- Filtri -->
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <input
           type="text"
           [(ngModel)]="searchQuery"
           (keyup.enter)="search()"
           placeholder="Cerca trick..."
           i18n-placeholder="@@tricks.search"
-          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-56"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-full sm:w-56"
         />
         <select
           [(ngModel)]="filterDifficolta"
           (change)="load()"
-          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none"
+          class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none w-full sm:w-auto"
         >
           <option value="" i18n="@@tricks.all_levels">Tutti i livelli</option>
           <option value="base">Base</option>
@@ -72,14 +70,14 @@ interface EditForm {
           @for (trick of tricks(); track trick.id) {
             <div class="card overflow-hidden">
               <!-- Riga principale -->
-              <div class="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+              <div class="p-3 sm:p-4 flex gap-3">
                 @if (trick.thumbnail_url) {
-                  <img [src]="trick.thumbnail_url" [alt]="trick.nome" class="w-16 h-16 rounded-lg object-cover shrink-0 bg-gray-100" />
+                  <img [src]="trick.thumbnail_url" [alt]="trick.nome" class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" style="background:var(--bg3)" />
                 } @else {
-                  <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl shrink-0">🛹</div>
+                  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center text-2xl shrink-0" style="background:var(--bg3)">�</div>
                 }
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-gray-900 truncate">{{ trick.nome }}</p>
+                  <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">{{ trick.nome }}</p>
                   <p class="text-xs text-gray-500 mt-0.5">{{ trick.difficolta }}</p>
                   @if (trick.tags.length > 0) {
                     <div class="flex flex-wrap gap-1 mt-1.5">
@@ -88,19 +86,21 @@ interface EditForm {
                       }
                     </div>
                   }
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  @if (trick.video_url) {
-                    <a [href]="trick.video_url" target="_blank" class="btn-ghost py-1.5 px-3 text-xs" i18n="@@tricks.video">Video</a>
-                  }
-                  <button
-                    (click)="toggleEdit(trick)"
-                    [class]="editingId() === trick.id
-                      ? 'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 font-medium text-xs border border-gray-300'
-                      : 'btn-ghost py-1.5 px-3 text-xs'"
-                    i18n="@@tricks.edit"
-                  >{{ editingId() === trick.id ? '✕ Chiudi' : '✏️ Modifica' }}</button>
-                  <button (click)="deleteTrick(trick)" class="btn-danger py-1.5 px-3 text-xs" i18n="@@tricks.delete">Elimina</button>
+                  <!-- Bottoni: sempre sotto info su mobile -->
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    @if (trick.video_url) {
+                      <a [href]="trick.video_url" target="_blank" class="btn-ghost py-1 px-2.5 text-xs" i18n="@@tricks.video">Video</a>
+                    }
+                    <button
+                      (click)="toggleEdit(trick)"
+                      [class]="editingId() === trick.id
+                        ? 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border'
+                        : 'btn-ghost py-1 px-2.5 text-xs'"
+                      [style]="editingId() === trick.id ? 'background:rgba(18,104,105,0.1);color:var(--text-dim);border-color:var(--border)' : ''"
+                      i18n="@@tricks.edit"
+                    >{{ editingId() === trick.id ? '✕ Chiudi' : '✏️ Modifica' }}</button>
+                    <button (click)="deleteTrick(trick)" class="btn-danger py-1 px-2.5 text-xs" i18n="@@tricks.delete">Elimina</button>
+                  </div>
                 </div>
               </div>
 

@@ -149,7 +149,7 @@ type Tab = 'pending' | 'approved';
             </div>
 
             <!-- Actions Footer -->
-            <div class="px-4 py-4 flex items-center justify-center gap-3 shrink-0" style="background:rgba(0,0,0,0.5)">
+            <div class="px-4 flex items-center justify-center gap-3 shrink-0" style="background:rgba(0,0,0,0.5);padding-top:1rem;padding-bottom:max(1rem, env(safe-area-inset-bottom))">
               @if (photo.status === 'pending') {
                 <button (click)="approveFromLightbox(photo)" class="btn-primary px-6 py-2">Approva</button>
               }
