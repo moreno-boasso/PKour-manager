@@ -8,7 +8,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const auth = inject(AuthService);
 
-  const cloned = req.clone({ withCredentials: true });
+  const { withCredentials, headers } = auth.authenticatedRequestOptions();
+  const cloned = req.clone({
+    withCredentials,
+    setHeaders: headers ?? {},
+  });
 
   return next(cloned).pipe(
     catchError((err) => {

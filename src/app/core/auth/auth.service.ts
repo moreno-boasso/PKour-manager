@@ -7,11 +7,14 @@ import { AdminUser } from '../../shared/models/admin.model';
 
 interface LoginResponse {
   user: AdminUser;
+  sessionToken?: string;
 }
 
 interface SessionResponse {
   user: AdminUser;
 }
+
+const SESSION_TOKEN_KEY = 'pkour_admin_session_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -25,6 +28,26 @@ export class AuthService {
   readonly isLoggedIn = computed(() => this._currentUser() !== null);
   readonly loading = this._loading.asReadonly();
 
+  getSessionToken(): string | null {
+    try {
+      return sessionStorage.getItem(SESSION_TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  private setSessionToken(token: string | null): void {
+    try {
+      if (token) {
+        sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+      } else {
+        sessionStorage.removeItem(SESSION_TOKEN_KEY);
+      }
+    } catch {
+      // sessionStorage unavailable (e.g. private mode restrictions)
+    }
+  }
+
   login(email: string, password: string): Observable<LoginResponse> {
     this._loading.set(true);
     return this.http
@@ -32,6 +55,9 @@ export class AuthService {
       .pipe(
         tap((res) => {
           this._currentUser.set(res.user);
+          if (res.sessionToken) {
+            this.setSessionToken(res.sessionToken);
+          }
           this._loading.set(false);
         }),
         catchError((err) => {
@@ -43,14 +69,14 @@ export class AuthService {
 
   logout(): Observable<void> {
     return this.http
-      .post<void>(`${environment.apiBaseUrl}/api/admin/logout`, {}, { withCredentials: true })
+      .post<void>(`${environment.apiBaseUrl}/api/admin/logout`, {}, this.authenticatedRequestOptions())
       .pipe(
         tap(() => {
-          this._currentUser.set(null);
+          this.clearUser();
           this.router.navigate(['/login']);
         }),
         catchError((err) => {
-          this._currentUser.set(null);
+          this.clearUser();
           this.router.navigate(['/login']);
           return throwError(() => err);
         }),
@@ -59,17 +85,30 @@ export class AuthService {
 
   clearUser(): void {
     this._currentUser.set(null);
+    this.setSessionToken(null);
   }
 
   checkSession(): Observable<SessionResponse> {
     return this.http
-      .get<SessionResponse>(`${environment.apiBaseUrl}/api/admin/session`, { withCredentials: true })
+      .get<SessionResponse>(`${environment.apiBaseUrl}/api/admin/session`, this.authenticatedRequestOptions())
       .pipe(
         tap((res) => this._currentUser.set(res.user)),
         catchError((err) => {
-          this._currentUser.set(null);
+          this.clearUser();
           return throwError(() => err);
         }),
       );
+  }
+
+  authenticatedRequestOptions(): { withCredentials: true; headers?: { Authorization: string } } {
+    const token = this.getSessionToken();
+    if (!token) {
+      return { withCredentials: true };
+    }
+
+    return {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` },
+    };
   }
 }
