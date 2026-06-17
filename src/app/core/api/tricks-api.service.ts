@@ -4,6 +4,16 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PaginatedResponse, Trick } from '../../shared/models/admin.model';
 
+export interface CreateTrickPayload {
+  id: string;
+  nome: string;
+  difficolta: string;
+  video_url?: string | null;
+  thumbnail_url?: string | null;
+  tags?: string[];
+  required?: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class TricksApiService {
   private readonly http = inject(HttpClient);
@@ -20,6 +30,10 @@ export class TricksApiService {
 
   patchTrick(id: string, data: Partial<Trick>): Observable<Trick> {
     return this.http.patch<Trick>(`${this.base}/api/manager/tricks/${id}`, data);
+  }
+
+  createTrick(data: CreateTrickPayload): Observable<Trick> {
+    return this.http.post<Trick>(`${this.base}/api/manager/tricks`, data);
   }
 
   deleteTrick(id: string): Observable<void> {

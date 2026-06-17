@@ -8,6 +8,7 @@ import { SwipeActionDirective } from '../../../shared/directives/swipe-action.di
 import { EmptyStateComponent } from '../../../shared/components/empty-state.component';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
+import { finalize } from 'rxjs';
 
 type Tab = 'pending' | 'approved';
 type MapView = 'satellite' | 'streetview';
@@ -406,9 +407,11 @@ export class SpotsModerationComponent implements OnInit {
 
   approve(spot: AdminSpot): void {
     this.loadingSvc.show();
-    this.api.patchSpotStatus(spot.id, 'approved').subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success(`"${spot.nome}" approvato`); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore approvazione'); },
+    this.api.patchSpotStatus(spot.id, 'approved').pipe(
+      finalize(() => this.loadingSvc.hide()),
+    ).subscribe({
+      next: () => { this.toast.success(`"${spot.nome}" approvato`); this.load(); },
+      error: () => this.toast.error('Errore approvazione'),
     });
   }
 
@@ -416,9 +419,15 @@ export class SpotsModerationComponent implements OnInit {
     const d = this.selectedDetail();
     if (!d) return;
     this.loadingSvc.show();
-    this.api.patchSpotStatus(d.id, 'approved').subscribe({
-      next: (updated) => { this.loadingSvc.hide(); this.toast.success(`"${d.nome}" approvato`); this.selectedDetail.set(updated); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore approvazione'); },
+    this.api.patchSpotStatus(d.id, 'approved').pipe(
+      finalize(() => this.loadingSvc.hide()),
+    ).subscribe({
+      next: () => {
+        this.toast.success(`"${d.nome}" approvato`);
+        this.selectedDetail.update(detail => detail ? { ...detail, status: 'approved' } : null);
+        this.load();
+      },
+      error: () => this.toast.error('Errore approvazione'),
     });
   }
 
@@ -426,9 +435,11 @@ export class SpotsModerationComponent implements OnInit {
     const d = this.selectedDetail();
     if (!d || !confirm(`Eliminare definitivamente "${d.nome}"?\n\nQuesta azione non può essere annullata.`)) return;
     this.loadingSvc.show();
-    this.api.deleteSpot(d.id).subscribe({
-      next: () => { this.loadingSvc.hide(); this.toast.success(`"${d.nome}" eliminato`); this.selectedDetail.set(null); this.load(); },
-      error: () => { this.loadingSvc.hide(); this.toast.error('Errore eliminazione'); },
+    this.api.deleteSpot(d.id).pipe(
+      finalize(() => this.loadingSvc.hide()),
+    ).subscribe({
+      next: () => { this.toast.success(`"${d.nome}" eliminato`); this.selectedDetail.set(null); this.load(); },
+      error: () => this.toast.error('Errore eliminazione'),
     });
   }
 

@@ -16,6 +16,10 @@ interface EditForm {
   requiredRaw: string;
 }
 
+interface CreateForm extends EditForm {
+  id: string;
+}
+
 @Component({
   selector: 'app-tricks-list',
   standalone: true,
@@ -23,10 +27,68 @@ interface EditForm {
   imports: [CommonModule, FormsModule, EmptyStateComponent],
   template: `
     <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-900" i18n="@@tricks.title">Tricks</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ total() }} tricks totali</p>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900" i18n="@@tricks.title">Tricks</h1>
+          <p class="text-sm text-gray-500 mt-1">{{ total() }} tricks totali</p>
+        </div>
+        <button
+          (click)="toggleCreate()"
+          class="btn-primary py-2 px-4 text-sm shrink-0"
+          i18n="@@tricks.create"
+        >{{ showCreateForm() ? '✕ Annulla' : '+ Nuovo trick' }}</button>
       </div>
+
+      @if (showCreateForm() && createForm) {
+        <div class="card p-4 space-y-4">
+          <h2 class="font-semibold text-gray-900" i18n="@@tricks.create_title">Nuovo trick</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">ID <span class="text-gray-400">(es. kickflip)</span></label>
+              <input
+                type="text"
+                [(ngModel)]="createForm.id"
+                placeholder="kickflip"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Nome</label>
+              <input type="text" [(ngModel)]="createForm.nome" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Difficoltà</label>
+              <select [(ngModel)]="createForm.difficolta" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none">
+                <option value="base">Base</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzato">Avanzato</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Video URL</label>
+              <input type="url" [(ngModel)]="createForm.video_url" placeholder="https://..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Thumbnail URL</label>
+              <input type="url" [(ngModel)]="createForm.thumbnail_url" placeholder="https://..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Tags <span class="text-gray-400">(virgola separati)</span></label>
+              <input type="text" [(ngModel)]="createForm.tagsRaw" placeholder="flip, grab, spin" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Required <span class="text-gray-400">(virgola separati)</span></label>
+              <input type="text" [(ngModel)]="createForm.requiredRaw" placeholder="ollie, kickflip" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+          </div>
+          <div class="flex gap-2 justify-end pt-1">
+            <button (click)="cancelCreate()" class="btn-ghost py-1.5 px-4 text-sm">Annulla</button>
+            <button (click)="saveCreate()" [disabled]="saving()" class="btn-primary py-1.5 px-4 text-sm">
+              {{ saving() ? 'Creazione...' : 'Crea trick' }}
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- Filtri -->
       <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -186,6 +248,7 @@ export class TricksListComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly showCreateForm = signal(false);
   readonly tricks = signal<Trick[]>([]);
   readonly total = signal(0);
   readonly offset = signal(0);
@@ -195,6 +258,7 @@ export class TricksListComponent implements OnInit {
   searchQuery = '';
   filterDifficolta = '';
   editForm: EditForm | null = null;
+  createForm: CreateForm | null = null;
 
   ngOnInit(): void {
     this.load();
@@ -232,6 +296,7 @@ export class TricksListComponent implements OnInit {
       this.cancelEdit();
       return;
     }
+    this.cancelCreate();
     this.editingId.set(trick.id);
     this.editForm = {
       nome: trick.nome,
@@ -246,6 +311,70 @@ export class TricksListComponent implements OnInit {
   cancelEdit(): void {
     this.editingId.set(null);
     this.editForm = null;
+  }
+
+  toggleCreate(): void {
+    if (this.showCreateForm()) {
+      this.cancelCreate();
+      return;
+    }
+    this.cancelEdit();
+    this.showCreateForm.set(true);
+    this.createForm = {
+      id: '',
+      nome: '',
+      difficolta: 'base',
+      video_url: '',
+      thumbnail_url: '',
+      tagsRaw: '',
+      requiredRaw: '',
+    };
+  }
+
+  cancelCreate(): void {
+    this.showCreateForm.set(false);
+    this.createForm = null;
+  }
+
+  saveCreate(): void {
+    if (!this.createForm) return;
+
+    const id = this.createForm.id.trim().toLowerCase();
+    const nome = this.createForm.nome.trim();
+    if (!id || !nome) {
+      this.toast.error('ID e nome sono obbligatori');
+      return;
+    }
+
+    this.saving.set(true);
+    this.loadingSvc.show();
+
+    this.api.createTrick({
+      id,
+      nome,
+      difficolta: this.createForm.difficolta,
+      video_url: this.createForm.video_url.trim() || null,
+      thumbnail_url: this.createForm.thumbnail_url.trim() || null,
+      tags: this.createForm.tagsRaw.split(',').map(t => t.trim()).filter(Boolean),
+      required: this.createForm.requiredRaw.split(',').map(t => t.trim()).filter(Boolean),
+    }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.loadingSvc.hide();
+        this.toast.success(`"${nome}" creato`);
+        this.cancelCreate();
+        this.offset.set(0);
+        this.load();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.loadingSvc.hide();
+        const message = err?.error?.error === 'Esiste già un trick con questo ID'
+          ? 'Esiste già un trick con questo ID'
+          : 'Errore durante la creazione';
+        this.toast.error(message);
+      },
+    });
   }
 
   saveEdit(trick: Trick): void {
