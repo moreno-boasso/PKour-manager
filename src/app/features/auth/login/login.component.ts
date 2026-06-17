@@ -81,7 +81,21 @@ export class LoginComponent {
     if (!this.email || !this.password) return;
     this.error.set(null);
     this.auth.login(this.email, this.password).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        if (!this.auth.getAuthToken()) {
+          this.auth.clearUser();
+          this.error.set('Login riuscito ma il token di sessione non è disponibile. Aggiorna l\'app.');
+          return;
+        }
+
+        this.auth.checkSession().subscribe({
+          next: () => this.router.navigate(['/']),
+          error: () => {
+            this.auth.clearUser();
+            this.error.set('Sessione non valida. Riprova ad accedere.');
+          },
+        });
+      },
       error: (err) => {
         const msg = err?.error?.error ?? $localize`:@@login.error:Credenziali non valide`;
         this.error.set(msg);
