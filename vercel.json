@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build -- --configuration production",
   "outputDirectory": "dist/pkour-manager/browser",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
