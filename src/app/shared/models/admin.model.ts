@@ -1,4 +1,5 @@
 export type ModerationStatus = 'pending' | 'approved';
+export type CommunityItemStatus = 'pending' | 'approved' | 'ended';
 
 export interface AdminUser {
   userId: string;
@@ -125,4 +126,58 @@ export interface ManagerStats {
   pending_reviews: number;
   pending_photos: number;
   pending_reports: number;
+  pending_events: number;
+}
+
+export interface AdminCommunityCreator {
+  id: string;
+  username: string | null;
+  nome: string | null;
+  avatar_url: string | null;
+}
+
+export interface AdminCommunityLocation {
+  id: number | null;
+  spot_id: number | null;
+  nome: string | null;
+  lat: number;
+  lon: number;
+  is_primary?: boolean;
+  sort_order?: number;
+}
+
+export interface AdminEvent {
+  id: number;
+  nome: string;
+  note: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: CommunityItemStatus;
+  link_evento: string | null;
+  banner_url: string | null;
+  contatto: string | null;
+  costo_amount: number | null;
+  costo_currency: string | null;
+  costo_label: string | null;
+  created_at: string;
+  updated_at?: string;
+  creator: AdminCommunityCreator;
+  location_primary: AdminCommunityLocation | null;
+  interested_count: number;
+  locations?: AdminCommunityLocation[];
+}
+
+export interface AdminJam {
+  id: number;
+  nome: string;
+  note: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+  creator: AdminCommunityCreator;
+  location_primary: AdminCommunityLocation | null;
+  participants_count: number;
+  locations?: AdminCommunityLocation[];
 }

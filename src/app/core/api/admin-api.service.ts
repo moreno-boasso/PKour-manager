@@ -3,8 +3,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AdminEvent,
+  AdminJam,
   AdminSpot,
   AdminSpotDetail,
+  CommunityItemStatus,
   ManagerPhoto,
   ManagerReport,
   ManagerReview,
@@ -192,6 +195,95 @@ export class AdminApiService {
         this.cache.invalidate(`spot-detail-${id}`);
         this.cache.invalidate('spots-');
         this.cache.invalidate('stats');
+      })
+    );
+  }
+
+  getEvents(
+    status: CommunityItemStatus,
+    limit: number,
+    offset: number,
+    q?: string
+  ): Observable<PaginatedResponse<AdminEvent>> {
+    let params = new HttpParams()
+      .set('status', status)
+      .set('limit', limit)
+      .set('offset', offset);
+    if (q) params = params.set('q', q);
+    const cacheKey = `events-${status}-${limit}-${offset}-${q || ''}`;
+    return this.cache.wrap(
+      cacheKey,
+      this.http.get<PaginatedResponse<AdminEvent>>(
+        `${this.base}/api/manager/events`,
+        { params }
+      ),
+      this.CACHE_TTL
+    );
+  }
+
+  getEventDetail(id: number): Observable<AdminEvent> {
+    return this.cache.wrap(
+      `event-detail-${id}`,
+      this.http.get<AdminEvent>(`${this.base}/api/manager/events/${id}`),
+      this.DETAIL_CACHE_TTL
+    );
+  }
+
+  approveEvent(id: number): Observable<unknown> {
+    return this.http
+      .patch(`${this.base}/api/manager/events/${id}/status`, {
+        status: 'approved',
+      })
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('events-');
+          this.cache.invalidate(`event-detail-${id}`);
+          this.cache.invalidate('stats');
+        })
+      );
+  }
+
+  deleteEvent(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/api/manager/events/${id}`).pipe(
+      tap(() => {
+        this.cache.invalidate('events-');
+        this.cache.invalidate(`event-detail-${id}`);
+        this.cache.invalidate('stats');
+      })
+    );
+  }
+
+  getJams(
+    limit: number,
+    offset: number,
+    q?: string
+  ): Observable<PaginatedResponse<AdminJam>> {
+    let params = new HttpParams().set('limit', limit).set('offset', offset);
+    if (q) params = params.set('q', q);
+    const cacheKey = `jams-${limit}-${offset}-${q || ''}`;
+    return this.cache.wrap(
+      cacheKey,
+      this.http.get<PaginatedResponse<AdminJam>>(
+        `${this.base}/api/manager/jams`,
+        { params }
+      ),
+      this.CACHE_TTL
+    );
+  }
+
+  getJamDetail(id: number): Observable<AdminJam> {
+    return this.cache.wrap(
+      `jam-detail-${id}`,
+      this.http.get<AdminJam>(`${this.base}/api/manager/jams/${id}`),
+      this.DETAIL_CACHE_TTL
+    );
+  }
+
+  deleteJam(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/api/manager/jams/${id}`).pipe(
+      tap(() => {
+        this.cache.invalidate('jams-');
+        this.cache.invalidate(`jam-detail-${id}`);
       })
     );
   }

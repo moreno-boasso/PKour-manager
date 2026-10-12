@@ -36,6 +36,20 @@ export const routes: Routes = [
         path: 'photos',
         loadComponent: () => import('./features/photos/photos-moderation/photos-moderation.component').then(m => m.PhotosModerationComponent),
       },
+      {
+        path: 'events',
+        loadComponent: () =>
+          import('./features/events/events-moderation/events-moderation.component').then(
+            (m) => m.EventsModerationComponent
+          ),
+      },
+      {
+        path: 'jams',
+        loadComponent: () =>
+          import('./features/jams/jams-moderation/jams-moderation.component').then(
+            (m) => m.JamsModerationComponent
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
