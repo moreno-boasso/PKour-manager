@@ -17,8 +17,8 @@ type Tab = 'pending' | 'approved';
   template: `
     <div class="p-6 space-y-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900" i18n="@@reports.title">Moderazione Segnalazioni</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ total() }} segnalazioni trovate</p>
+        <h1 class="text-2xl font-bold text-gray-900" i18n="@@reports.title">Stato spot</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ total() }} aggiornamenti stato trovati</p>
       </div>
 
       <!-- Tabs + Sort -->

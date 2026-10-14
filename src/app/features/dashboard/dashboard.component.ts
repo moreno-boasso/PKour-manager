@@ -17,8 +17,8 @@ import { ManagerStats } from '../../shared/models/admin.model';
       </div>
 
       @if (loading()) {
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          @for (i of [1,2,3,4,5]; track i) {
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          @for (i of [1,2,3,4,5,6]; track i) {
             <div class="card p-5 animate-pulse">
               <div class="h-4 bg-gray-200 rounded w-2/3 mb-3"></div>
               <div class="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -26,7 +26,7 @@ import { ManagerStats } from '../../shared/models/admin.model';
           }
         </div>
       } @else {
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           @for (card of statCards(); track card.label) {
             <a [routerLink]="card.route" class="card p-5 hover:shadow-card-hover transition-shadow cursor-pointer block">
               <div class="flex items-start justify-between">
@@ -63,7 +63,8 @@ export class DashboardComponent implements OnInit {
       { label: 'Eventi', count: s?.pending_events ?? 0, icon: '📅', route: '/events' },
       { label: 'Recensioni', count: s?.pending_reviews ?? 0, icon: '⭐', route: '/reviews' },
       { label: 'Foto', count: s?.pending_photos ?? 0, icon: '📷', route: '/photos' },
-      { label: 'Segnalazioni', count: s?.pending_reports ?? 0, icon: '🚩', route: '/reports' },
+      { label: 'Segnalazioni', count: s?.pending_abuse_reports ?? 0, icon: '🚩', route: '/reports' },
+      { label: 'Stato spot', count: s?.pending_reports ?? 0, icon: '⚠️', route: '/spot-status' },
     ];
   };
 

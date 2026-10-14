@@ -30,7 +30,17 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
-        loadComponent: () => import('./features/reports/reports-moderation/reports-moderation.component').then(m => m.ReportsModerationComponent),
+        loadComponent: () =>
+          import('./features/abuse/abuse-moderation/abuse-moderation.component').then(
+            (m) => m.AbuseModerationComponent
+          ),
+      },
+      {
+        path: 'spot-status',
+        loadComponent: () =>
+          import('./features/reports/reports-moderation/reports-moderation.component').then(
+            (m) => m.ReportsModerationComponent
+          ),
       },
       {
         path: 'photos',

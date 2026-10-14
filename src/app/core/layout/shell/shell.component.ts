@@ -123,7 +123,8 @@ export class ShellComponent {
     { path: 'events', label: 'Eventi', shortLabel: 'Eventi', icon: '📅' },
     { path: 'jams', label: 'Jam', shortLabel: 'Jam', icon: '🤝' },
     { path: 'reviews', label: 'Recensioni', shortLabel: 'Review', icon: '⭐' },
-    { path: 'reports', label: 'Segnalazioni', shortLabel: 'Report', icon: '🚩' },
+    { path: 'reports', label: 'Segnalazioni', shortLabel: 'Abuse', icon: '🚩' },
+    { path: 'spot-status', label: 'Stato spot', shortLabel: 'Stato', icon: '⚠️' },
     { path: 'photos', label: 'Foto', shortLabel: 'Foto', icon: '📷' },
     { path: 'tricks', label: 'Tricks', shortLabel: 'Tricks', icon: '🛹' },
   ];

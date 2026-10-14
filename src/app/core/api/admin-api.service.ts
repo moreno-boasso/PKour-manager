@@ -3,6 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AbuseReport,
+  AbuseReportStatus,
+  AbuseReportTargetType,
   AdminEvent,
   AdminJam,
   AdminSpot,
@@ -14,6 +17,7 @@ import {
   ManagerStats,
   ModerationStatus,
   PaginatedResponse,
+  TopReportedUser,
 } from '../../shared/models/admin.model';
 import { CacheService } from '../cache/cache.service';
 
@@ -285,6 +289,69 @@ export class AdminApiService {
         this.cache.invalidate('jams-');
         this.cache.invalidate(`jam-detail-${id}`);
       })
+    );
+  }
+
+  getAbuseReports(
+    status: AbuseReportStatus,
+    limit: number,
+    offset: number,
+    targetType?: AbuseReportTargetType | '',
+    q?: string
+  ): Observable<PaginatedResponse<AbuseReport>> {
+    let params = new HttpParams()
+      .set('status', status)
+      .set('limit', limit)
+      .set('offset', offset);
+    if (targetType) params = params.set('target_type', targetType);
+    if (q) params = params.set('q', q);
+    const cacheKey = `abuse-${status}-${limit}-${offset}-${targetType || 'all'}-${q || ''}`;
+    return this.cache.wrap(
+      cacheKey,
+      this.http.get<PaginatedResponse<AbuseReport>>(
+        `${this.base}/api/manager/abuse-reports`,
+        { params }
+      ),
+      this.CACHE_TTL
+    );
+  }
+
+  patchAbuseReportStatus(
+    id: number,
+    status: AbuseReportStatus
+  ): Observable<unknown> {
+    return this.http
+      .patch(`${this.base}/api/manager/abuse-reports/${id}/status`, { status })
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('abuse-');
+          this.cache.invalidate('stats');
+          this.cache.invalidate('top-reported-users');
+        })
+      );
+  }
+
+  deleteAbuseReport(id: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.base}/api/manager/abuse-reports/${id}`)
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('abuse-');
+          this.cache.invalidate('stats');
+          this.cache.invalidate('top-reported-users');
+        })
+      );
+  }
+
+  getTopReportedUsers(limit = 20): Observable<{ data: TopReportedUser[] }> {
+    const params = new HttpParams().set('limit', limit);
+    return this.cache.wrap(
+      `top-reported-users-${limit}`,
+      this.http.get<{ data: TopReportedUser[] }>(
+        `${this.base}/api/manager/abuse-reports/top-users`,
+        { params }
+      ),
+      this.CACHE_TTL
     );
   }
 }

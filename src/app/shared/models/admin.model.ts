@@ -127,6 +127,7 @@ export interface ManagerStats {
   pending_photos: number;
   pending_reports: number;
   pending_events: number;
+  pending_abuse_reports: number;
 }
 
 export interface AdminCommunityCreator {
@@ -134,6 +135,42 @@ export interface AdminCommunityCreator {
   username: string | null;
   nome: string | null;
   avatar_url: string | null;
+}
+
+export type AbuseReportTargetType = 'spot' | 'event' | 'jam' | 'user';
+export type AbuseReportStatus = 'pending' | 'reviewed';
+
+export interface AbuseReportSnapshot {
+  nome?: string | null;
+  label?: string | null;
+  username?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  creator?: AdminCommunityCreator | null;
+  creator_user_id?: string | null;
+}
+
+export interface AbuseReport {
+  id: number;
+  target_type: AbuseReportTargetType;
+  target_id: string;
+  reason: string;
+  description: string | null;
+  snapshot: AbuseReportSnapshot;
+  reporter_user_id: string;
+  reporter: AdminCommunityCreator;
+  status: AbuseReportStatus;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
+export interface TopReportedUser {
+  user_id: string;
+  username: string | null;
+  nome: string | null;
+  avatar_url: string | null;
+  report_count: number;
+  pending_count: number;
 }
 
 export interface AdminCommunityLocation {
