@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } 
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApiService, SortField, SortOrder } from '../../../core/api/admin-api.service';
 import { AdminSpot, AdminSpotDetail, ModerationStatus } from '../../../shared/models/admin.model';
 import { SwipeActionDirective } from '../../../shared/directives/swipe-action.directive';
@@ -326,6 +327,8 @@ export class SpotsModerationComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly loadingSvc = inject(LoadingService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly spots = signal<AdminSpot[]>([]);
@@ -371,7 +374,14 @@ export class SpotsModerationComponent implements OnInit {
     { value: 'approved', label: 'Approvati' },
   ];
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    const rawId = this.route.snapshot.queryParamMap.get('id');
+    const id = rawId ? Number(rawId) : NaN;
+    if (Number.isFinite(id) && id > 0) {
+      this.openDetailById(id);
+    }
+  }
 
   load(): void {
     this.loading.set(true);
@@ -397,11 +407,28 @@ export class SpotsModerationComponent implements OnInit {
   }
 
   openDetail(spot: AdminSpot): void {
-    this.mapView.set('satellite');
-    this.api.getSpotDetail(spot.id).subscribe({ next: (d) => this.selectedDetail.set(d) });
+    this.openDetailById(spot.id);
   }
 
-  closeDetail(): void { this.selectedDetail.set(null); }
+  openDetailById(id: number): void {
+    this.mapView.set('satellite');
+    this.api.getSpotDetail(id).subscribe({
+      next: (d) => this.selectedDetail.set(d),
+      error: () => this.toast.error('Spot non trovato'),
+    });
+  }
+
+  closeDetail(): void {
+    this.selectedDetail.set(null);
+    if (this.route.snapshot.queryParamMap.has('id')) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+  }
 
   openPhotoFullscreen(url: string): void { this.fullscreenPhoto.set(url); }
 

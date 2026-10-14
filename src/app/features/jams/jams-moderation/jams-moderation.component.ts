@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApiService } from '../../../core/api/admin-api.service';
 import { AdminJam } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -124,6 +125,8 @@ export class JamsModerationComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly toast = inject(ToastService);
   private readonly loadingSvc = inject(LoadingService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly jams = signal<AdminJam[]>([]);
@@ -137,6 +140,11 @@ export class JamsModerationComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    const rawId = this.route.snapshot.queryParamMap.get('id');
+    const id = rawId ? Number(rawId) : NaN;
+    if (Number.isFinite(id) && id > 0) {
+      this.openDetailById(id);
+    }
   }
 
   load(): void {
@@ -175,14 +183,22 @@ export class JamsModerationComponent implements OnInit {
   }
 
   openDetail(jam: AdminJam): void {
+    this.openDetailById(jam.id, jam);
+  }
+
+  openDetailById(id: number, fallback?: AdminJam): void {
     this.loadingSvc.show();
-    this.api.getJamDetail(jam.id).subscribe({
+    this.api.getJamDetail(id).subscribe({
       next: (detail) => {
         this.selected.set(detail);
         this.loadingSvc.hide();
       },
       error: () => {
-        this.selected.set(jam);
+        if (fallback) {
+          this.selected.set(fallback);
+        } else {
+          this.toast.error('Jam non trovata');
+        }
         this.loadingSvc.hide();
       },
     });
@@ -190,6 +206,14 @@ export class JamsModerationComponent implements OnInit {
 
   closeDetail(): void {
     this.selected.set(null);
+    if (this.route.snapshot.queryParamMap.has('id')) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   deleteJam(jam: AdminJam): void {

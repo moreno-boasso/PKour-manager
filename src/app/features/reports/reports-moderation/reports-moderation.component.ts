@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { AdminApiService, SortField, SortOrder } from '../../../core/api/admin-api.service';
 import { ManagerReport } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -13,7 +14,7 @@ type Tab = 'pending' | 'approved';
   selector: 'app-reports-moderation',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, RouterModule, EmptyStateComponent],
   template: `
     <div class="p-6 space-y-6">
       <div>
@@ -80,6 +81,14 @@ type Tab = 'pending' | 'approved';
                     <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ report.descrizione }}</p>
                   }
                   <p class="text-xs text-gray-400 mt-1">{{ report.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+                  @if (report.spot_id) {
+                    <a
+                      [routerLink]="['/spots']"
+                      [queryParams]="{ id: report.spot_id }"
+                      (click)="$event.stopPropagation()"
+                      class="inline-block text-xs text-primary font-medium hover:underline mt-1"
+                    >Apri contenuto →</a>
+                  }
                 </div>
                 <div class="flex flex-col gap-1.5 shrink-0">
                   @if (report.status === 'pending') {
@@ -136,6 +145,13 @@ type Tab = 'pending' | 'approved';
                   <span class="text-sm font-medium">Status:</span>
                   <span [class]="r.status === 'pending' ? 'badge-pending' : 'badge-approved'">{{ r.status === 'approved' ? 'Approvata' : 'In attesa' }}</span>
                 </div>
+                @if (r.spot_id) {
+                  <a
+                    [routerLink]="['/spots']"
+                    [queryParams]="{ id: r.spot_id }"
+                    class="inline-block text-sm text-primary font-medium hover:underline"
+                  >Apri contenuto →</a>
+                }
               </div>
 
               <div class="flex gap-2 pt-2">

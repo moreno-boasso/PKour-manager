@@ -126,7 +126,11 @@ import { LoadingService } from '../../../core/ui/loading.service';
                   <p class="text-xs text-gray-400">{{ report.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
                   <div class="flex flex-wrap gap-2 pt-1">
                     @if (contentLink(report); as link) {
-                      <a [routerLink]="link" class="text-xs text-primary font-medium hover:underline">
+                      <a
+                        [routerLink]="link"
+                        [queryParams]="contentQuery(report)"
+                        class="text-xs text-primary font-medium hover:underline"
+                      >
                         Apri contenuto →
                       </a>
                     }
@@ -242,17 +246,25 @@ export class AbuseModerationComponent implements OnInit {
     return creator.username ?? creator.nome ?? creator.id;
   }
 
-  contentLink(report: AbuseReport): string | null {
+  contentLink(report: AbuseReport): string[] | null {
+    if (!this.contentQuery(report)) return null;
     switch (report.target_type) {
       case 'spot':
-        return '/spots';
+        return ['/spots'];
       case 'event':
-        return '/events';
+        return ['/events'];
       case 'jam':
-        return '/jams';
+        return ['/jams'];
       case 'user':
         return null;
     }
+  }
+
+  contentQuery(report: AbuseReport): { id: string } | null {
+    if (report.target_type === 'user') return null;
+    const id = String(report.target_id ?? '').trim();
+    if (!id) return null;
+    return { id };
   }
 
   load(): void {
