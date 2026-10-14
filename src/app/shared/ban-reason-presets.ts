@@ -1,23 +1,28 @@
 import { CommunityBanSeverity } from './models/admin.model';
 
+/** English base reasons shown to users; admins can edit before saving. */
 export const BAN_REASON_PRESETS: Record<CommunityBanSeverity, string[]> = {
   light: [
-    'Spam o promozione non consentita nella community',
-    'Contenuti inappropriati in eventi/jam',
-    'Comportamento scorretto verso altri utenti',
+    'Spam or unauthorized promotion in the community',
+    'Inappropriate content in events/jams',
+    'Unacceptable behavior toward other users',
   ],
   medium: [
-    'Violazioni ripetute delle regole della community',
-    'Contenuti offensivi o pericolosi',
-    'Abuso delle segnalazioni o del sistema',
+    'Repeated community rules violations',
+    'Offensive or dangerous content',
+    'Abuse of reports or the system',
   ],
   permanent: [
-    'Violazioni gravi e ripetute delle regole',
-    'Minacce, molestie o comportamenti che compromettono la sicurezza',
-    'Uso malevolo dell’account',
+    'Severe and repeated rules violations',
+    'Threats, harassment, or safety-compromising behavior',
+    'Malicious use of the account',
   ],
 };
 
 export function banReasonsFor(severity: CommunityBanSeverity): string[] {
   return BAN_REASON_PRESETS[severity];
+}
+
+export function defaultBanReason(severity: CommunityBanSeverity): string {
+  return BAN_REASON_PRESETS[severity][0] ?? '';
 }

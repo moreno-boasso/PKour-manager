@@ -10,7 +10,10 @@ import {
   CommunityBanSeverity,
   TopReportedUser,
 } from '../../../shared/models/admin.model';
-import { banReasonsFor } from '../../../shared/ban-reason-presets';
+import {
+  banReasonsFor,
+  defaultBanReason,
+} from '../../../shared/ban-reason-presets';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 
@@ -204,19 +207,31 @@ import { LoadingService } from '../../../core/ui/loading.service';
                 <option value="permanent">Permanent</option>
               </select>
             </label>
-            <label class="block text-sm">
-              <span style="color:var(--text-dim)">Motivo</span>
-              <select
-                class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
-                [(ngModel)]="banReason"
-              >
-                <option value="" disabled>Seleziona un motivo</option>
-                @for (reason of banReasonOptions(); track reason) {
-                  <option [value]="reason">{{ reason }}</option>
-                }
-              </select>
-            </label>
+            <div class="space-y-2">
+              <label class="block text-sm">
+                <span style="color:var(--text-dim)">Motivo base (EN)</span>
+                <select
+                  class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
+                  [ngModel]="banPresetPick"
+                  (ngModelChange)="applyBanPreset($event)"
+                >
+                  @for (reason of banReasonOptions(); track reason) {
+                    <option [value]="reason">{{ reason }}</option>
+                  }
+                </select>
+              </label>
+              <label class="block text-sm">
+                <span style="color:var(--text-dim)">Motivo (modificabile, EN)</span>
+                <textarea
+                  rows="3"
+                  class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
+                  [(ngModel)]="banReason"
+                  placeholder="Edit the English reason shown to the user"
+                ></textarea>
+              </label>
+            </div>
             <div class="flex gap-2 pt-2">
               <button (click)="submitBan()" class="btn-danger flex-1">Conferma ban</button>
               <button (click)="closeBan()" class="btn-ghost flex-1" style="border:1px solid var(--border)">Annulla</button>
@@ -244,7 +259,8 @@ export class AbuseModerationComponent implements OnInit {
   readonly pageSize = 20;
 
   banSeverity: CommunityBanSeverity = 'light';
-  banReason = '';
+  banReason = defaultBanReason('light');
+  banPresetPick = defaultBanReason('light');
   readonly banReasonOptions = signal<string[]>(banReasonsFor('light'));
 
   readonly tabs: { value: AbuseReportStatus; label: string }[] = [
@@ -470,16 +486,28 @@ export class AbuseModerationComponent implements OnInit {
   openBan(userId: string, label: string): void {
     this.banSeverity = 'light';
     this.banReasonOptions.set(banReasonsFor('light'));
-    this.banReason = '';
+    this.banPresetPick = defaultBanReason('light');
+    this.banReason = defaultBanReason('light');
     this.banDialog.set({ userId, label });
   }
 
+  applyBanPreset(reason: string): void {
+    this.banPresetPick = reason;
+    this.banReason = reason;
+  }
+
   onBanSeverityChange(value: CommunityBanSeverity): void {
+    const previousOptions = this.banReasonOptions();
+    const wasPresetOrEmpty =
+      this.banReason.trim() === '' ||
+      previousOptions.includes(this.banReason.trim());
     this.banSeverity = value;
     const options = banReasonsFor(value);
     this.banReasonOptions.set(options);
-    if (!options.includes(this.banReason)) {
-      this.banReason = '';
+    const next = defaultBanReason(value);
+    this.banPresetPick = next;
+    if (wasPresetOrEmpty) {
+      this.banReason = next;
     }
   }
 
@@ -492,7 +520,7 @@ export class AbuseModerationComponent implements OnInit {
     if (!dialog) return;
     const reason = this.banReason.trim();
     if (!reason) {
-      this.toast.error('Seleziona un motivo');
+      this.toast.error('Motivo obbligatorio');
       return;
     }
     this.loadingSvc.show();

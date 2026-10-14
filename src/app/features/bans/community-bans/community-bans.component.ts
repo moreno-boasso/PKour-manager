@@ -7,7 +7,10 @@ import {
   CommunityBan,
   CommunityBanSeverity,
 } from '../../../shared/models/admin.model';
-import { banReasonsFor } from '../../../shared/ban-reason-presets';
+import {
+  banReasonsFor,
+  defaultBanReason,
+} from '../../../shared/ban-reason-presets';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 
@@ -164,19 +167,31 @@ import { LoadingService } from '../../../core/ui/loading.service';
               </select>
             </label>
 
-            <label class="block text-sm">
-              <span style="color:var(--text-dim)">Motivo</span>
-              <select
-                class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
-                [(ngModel)]="formReason"
-              >
-                <option value="" disabled>Seleziona un motivo</option>
-                @for (reason of reasonOptions(); track reason) {
-                  <option [value]="reason">{{ reason }}</option>
-                }
-              </select>
-            </label>
+            <div class="space-y-2">
+              <label class="block text-sm">
+                <span style="color:var(--text-dim)">Motivo base (EN)</span>
+                <select
+                  class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
+                  [ngModel]="presetPick"
+                  (ngModelChange)="applyPreset($event)"
+                >
+                  @for (reason of reasonOptions(); track reason) {
+                    <option [value]="reason">{{ reason }}</option>
+                  }
+                </select>
+              </label>
+              <label class="block text-sm">
+                <span style="color:var(--text-dim)">Motivo (modificabile, EN)</span>
+                <textarea
+                  rows="3"
+                  class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
+                  [(ngModel)]="formReason"
+                  placeholder="Edit the English reason shown to the user"
+                ></textarea>
+              </label>
+            </div>
 
             <div class="flex gap-2 pt-2">
               <button (click)="submitCreate()" class="btn-primary flex-1">Ban</button>
@@ -207,7 +222,8 @@ export class CommunityBansComponent implements OnInit {
   readonly pageSize = 20;
 
   formSeverity: CommunityBanSeverity = 'light';
-  formReason = '';
+  formReason = defaultBanReason('light');
+  presetPick = defaultBanReason('light');
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private userSearchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -268,7 +284,8 @@ export class CommunityBansComponent implements OnInit {
     this.userHits.set([]);
     this.formSeverity = 'light';
     this.reasonOptions.set(banReasonsFor('light'));
-    this.formReason = '';
+    this.presetPick = defaultBanReason('light');
+    this.formReason = defaultBanReason('light');
     this.showCreate.set(true);
   }
 
@@ -276,12 +293,23 @@ export class CommunityBansComponent implements OnInit {
     this.showCreate.set(false);
   }
 
+  applyPreset(reason: string): void {
+    this.presetPick = reason;
+    this.formReason = reason;
+  }
+
   onSeverityChange(value: CommunityBanSeverity): void {
+    const previousOptions = this.reasonOptions();
+    const wasPresetOrEmpty =
+      this.formReason.trim() === '' ||
+      previousOptions.includes(this.formReason.trim());
     this.formSeverity = value;
     const options = banReasonsFor(value);
     this.reasonOptions.set(options);
-    if (!options.includes(this.formReason)) {
-      this.formReason = '';
+    const next = defaultBanReason(value);
+    this.presetPick = next;
+    if (wasPresetOrEmpty) {
+      this.formReason = next;
     }
   }
 
@@ -328,7 +356,7 @@ export class CommunityBansComponent implements OnInit {
     }
     const reason = this.formReason.trim();
     if (!reason) {
-      this.toast.error('Seleziona un motivo');
+      this.toast.error('Motivo obbligatorio');
       return;
     }
     this.loadingSvc.show();
