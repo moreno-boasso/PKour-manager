@@ -173,6 +173,22 @@ export interface TopReportedUser {
   pending_count: number;
 }
 
+export type CommunityBanSeverity = 'light' | 'medium' | 'permanent';
+
+export interface CommunityBan {
+  id: number;
+  user_id: string;
+  severity: CommunityBanSeverity;
+  reason: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  created_by_admin_id: string;
+  created_at: string;
+  revoked_at: string | null;
+  is_active: boolean;
+  user: AdminCommunityCreator;
+}
+
 export interface AdminCommunityLocation {
   id: number | null;
   spot_id: number | null;

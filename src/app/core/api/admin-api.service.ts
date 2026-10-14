@@ -10,6 +10,8 @@ import {
   AdminJam,
   AdminSpot,
   AdminSpotDetail,
+  CommunityBan,
+  CommunityBanSeverity,
   CommunityItemStatus,
   ManagerPhoto,
   ManagerReport,
@@ -353,5 +355,46 @@ export class AdminApiService {
       ),
       this.CACHE_TTL
     );
+  }
+
+  getCommunityBans(
+    limit: number,
+    offset: number,
+    q?: string,
+    includeExpired = false
+  ): Observable<PaginatedResponse<CommunityBan>> {
+    let params = new HttpParams()
+      .set('limit', limit)
+      .set('offset', offset);
+    if (q) params = params.set('q', q);
+    if (includeExpired) params = params.set('include_expired', 'true');
+    const cacheKey = `bans-${limit}-${offset}-${q || ''}-${includeExpired}`;
+    return this.cache.wrap(
+      cacheKey,
+      this.http.get<PaginatedResponse<CommunityBan>>(
+        `${this.base}/api/manager/community-bans`,
+        { params }
+      ),
+      this.CACHE_TTL
+    );
+  }
+
+  createCommunityBan(body: {
+    user_id: string;
+    severity: CommunityBanSeverity;
+    reason?: string | null;
+  }): Observable<CommunityBan> {
+    return this.http
+      .post<CommunityBan>(`${this.base}/api/manager/community-bans`, body)
+      .pipe(tap(() => this.cache.invalidate('bans-')));
+  }
+
+  unbanCommunityBan(id: number): Observable<CommunityBan> {
+    return this.http
+      .post<CommunityBan>(
+        `${this.base}/api/manager/community-bans/${id}/unban`,
+        {}
+      )
+      .pipe(tap(() => this.cache.invalidate('bans-')));
   }
 }

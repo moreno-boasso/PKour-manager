@@ -124,6 +124,7 @@ export class ShellComponent {
     { path: 'jams', label: 'Jam', shortLabel: 'Jam', icon: '🤝' },
     { path: 'reviews', label: 'Recensioni', shortLabel: 'Review', icon: '⭐' },
     { path: 'reports', label: 'Segnalazioni', shortLabel: 'Abuse', icon: '🚩' },
+    { path: 'bans', label: 'Ban', shortLabel: 'Ban', icon: '⛔' },
     { path: 'spot-status', label: 'Stato spot', shortLabel: 'Stato', icon: '⚠️' },
     { path: 'photos', label: 'Foto', shortLabel: 'Foto', icon: '📷' },
     { path: 'tricks', label: 'Tricks', shortLabel: 'Tricks', icon: '🛹' },

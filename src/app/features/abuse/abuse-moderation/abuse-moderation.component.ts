@@ -7,6 +7,7 @@ import {
   AbuseReport,
   AbuseReportStatus,
   AbuseReportTargetType,
+  CommunityBanSeverity,
   TopReportedUser,
 } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -31,21 +32,28 @@ import { LoadingService } from '../../../core/ui/loading.service';
           </h2>
           <div class="flex flex-wrap gap-2">
             @for (user of topUsers(); track user.user_id) {
-              <button
-                type="button"
-                class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm hover:bg-amber-50 hover:border-amber-200"
-                (click)="filterByUser(user)"
-              >
-                <span class="font-medium text-gray-900">
-                  {{ user.username ?? user.nome ?? user.user_id }}
-                </span>
-                <span class="text-xs text-gray-500 ml-2">
-                  {{ user.report_count }} tot
-                  @if (user.pending_count > 0) {
-                    · {{ user.pending_count }} pending
-                  }
-                </span>
-              </button>
+              <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm flex items-center gap-2">
+                <button
+                  type="button"
+                  class="text-left hover:text-amber-700"
+                  (click)="filterByUser(user)"
+                >
+                  <span class="font-medium text-gray-900">
+                    {{ user.username ?? user.nome ?? user.user_id }}
+                  </span>
+                  <span class="text-xs text-gray-500 ml-2">
+                    {{ user.report_count }} tot
+                    @if (user.pending_count > 0) {
+                      · {{ user.pending_count }} pending
+                    }
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="text-xs text-red-600 font-medium hover:underline"
+                  (click)="openBan(user.user_id, user.username ?? user.nome ?? user.user_id)"
+                >Ban</button>
+              </div>
             }
           </div>
         </div>
@@ -148,9 +156,15 @@ import { LoadingService } from '../../../core/ui/loading.service';
                       class="btn-ghost py-1 px-3 text-xs justify-center border border-gray-200"
                     >Riapri</button>
                   }
+                  @if (banTargetUserId(report); as banUserId) {
+                    <button
+                      (click)="openBan(banUserId, banTargetLabel(report))"
+                      class="btn-danger py-1 px-3 text-xs justify-center"
+                    >Ban</button>
+                  }
                   <button
                     (click)="remove(report)"
-                    class="btn-danger py-1 px-3 text-xs justify-center"
+                    class="btn-ghost py-1 px-3 text-xs justify-center border border-gray-200"
                   >Elimina</button>
                 </div>
               </div>
@@ -163,6 +177,38 @@ import { LoadingService } from '../../../core/ui/loading.service';
           <div class="flex gap-2">
             <button [disabled]="offset() === 0" (click)="prevPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40">← Precedente</button>
             <button [disabled]="offset() + pageSize >= total()" (click)="nextPage()" class="btn-ghost py-1.5 px-3 text-sm disabled:opacity-40">Successivo →</button>
+          </div>
+        </div>
+      }
+
+      @if (banDialog(); as dialog) {
+        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" (click)="closeBan()">
+          <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4" (click)="$event.stopPropagation()">
+            <h2 class="text-lg font-bold text-gray-900">Ban {{ dialog.label }}</h2>
+            <p class="text-xs text-gray-500 break-all">{{ dialog.userId }}</p>
+            <label class="block text-sm">
+              <span class="text-gray-600">Severity</span>
+              <select
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary"
+                [(ngModel)]="banSeverity"
+              >
+                <option value="light">Light (7 giorni)</option>
+                <option value="medium">Medium (30 giorni)</option>
+                <option value="permanent">Permanent</option>
+              </select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-gray-600">Motivo (opz.)</span>
+              <textarea
+                rows="3"
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary"
+                [(ngModel)]="banReason"
+              ></textarea>
+            </label>
+            <div class="flex gap-2 pt-2">
+              <button (click)="submitBan()" class="btn-danger flex-1">Conferma ban</button>
+              <button (click)="closeBan()" class="btn-ghost flex-1 border border-gray-200">Annulla</button>
+            </div>
           </div>
         </div>
       }
@@ -182,7 +228,11 @@ export class AbuseModerationComponent implements OnInit {
   readonly activeTab = signal<AbuseReportStatus>('pending');
   readonly targetType = signal<AbuseReportTargetType | ''>('');
   readonly search = signal('');
+  readonly banDialog = signal<{ userId: string; label: string } | null>(null);
   readonly pageSize = 20;
+
+  banSeverity: CommunityBanSeverity = 'light';
+  banReason = '';
 
   readonly tabs: { value: AbuseReportStatus; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
@@ -385,5 +435,55 @@ export class AbuseModerationComponent implements OnInit {
         this.loadingSvc.hide();
       },
     });
+  }
+
+  banTargetUserId(report: AbuseReport): string | null {
+    if (report.target_type === 'user') {
+      return report.target_id || null;
+    }
+    if (report.target_type === 'event' || report.target_type === 'jam') {
+      return report.snapshot?.creator?.id ?? null;
+    }
+    return null;
+  }
+
+  banTargetLabel(report: AbuseReport): string {
+    if (report.target_type === 'user') {
+      return this.targetLabel(report);
+    }
+    return this.creatorLabel(report) ?? report.target_id;
+  }
+
+  openBan(userId: string, label: string): void {
+    this.banSeverity = 'light';
+    this.banReason = '';
+    this.banDialog.set({ userId, label });
+  }
+
+  closeBan(): void {
+    this.banDialog.set(null);
+  }
+
+  submitBan(): void {
+    const dialog = this.banDialog();
+    if (!dialog) return;
+    this.loadingSvc.show();
+    this.api
+      .createCommunityBan({
+        user_id: dialog.userId,
+        severity: this.banSeverity,
+        reason: this.banReason.trim() || null,
+      })
+      .subscribe({
+        next: () => {
+          this.toast.success('Utente bannato');
+          this.loadingSvc.hide();
+          this.closeBan();
+        },
+        error: () => {
+          this.toast.error('Errore ban');
+          this.loadingSvc.hide();
+        },
+      });
   }
 }

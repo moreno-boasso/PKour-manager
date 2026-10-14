@@ -60,6 +60,13 @@ export const routes: Routes = [
             (m) => m.JamsModerationComponent
           ),
       },
+      {
+        path: 'bans',
+        loadComponent: () =>
+          import('./features/bans/community-bans/community-bans.component').then(
+            (m) => m.CommunityBansComponent
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
