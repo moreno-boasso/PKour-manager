@@ -10,6 +10,7 @@ import {
   CommunityBanSeverity,
   TopReportedUser,
 } from '../../../shared/models/admin.model';
+import { banReasonsFor } from '../../../shared/ban-reason-presets';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 
@@ -182,15 +183,21 @@ import { LoadingService } from '../../../core/ui/loading.service';
       }
 
       @if (banDialog(); as dialog) {
-        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" (click)="closeBan()">
-          <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4" (click)="$event.stopPropagation()">
-            <h2 class="text-lg font-bold text-gray-900">Ban {{ dialog.label }}</h2>
-            <p class="text-xs text-gray-500 break-all">{{ dialog.userId }}</p>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.65)" (click)="closeBan()">
+          <div
+            class="rounded-xl max-w-md w-full p-6 space-y-4"
+            style="background:var(--bg2);border:1px solid var(--border)"
+            (click)="$event.stopPropagation()"
+          >
+            <h2 class="text-lg font-bold" style="color:var(--text)">Ban {{ dialog.label }}</h2>
+            <p class="text-xs break-all" style="color:var(--text-dim)">{{ dialog.userId }}</p>
             <label class="block text-sm">
-              <span class="text-gray-600">Severity</span>
+              <span style="color:var(--text-dim)">Severity</span>
               <select
-                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary"
-                [(ngModel)]="banSeverity"
+                class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
+                [ngModel]="banSeverity"
+                (ngModelChange)="onBanSeverityChange($event)"
               >
                 <option value="light">Light (7 giorni)</option>
                 <option value="medium">Medium (30 giorni)</option>
@@ -198,16 +205,21 @@ import { LoadingService } from '../../../core/ui/loading.service';
               </select>
             </label>
             <label class="block text-sm">
-              <span class="text-gray-600">Motivo (opz.)</span>
-              <textarea
-                rows="3"
-                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary"
+              <span style="color:var(--text-dim)">Motivo</span>
+              <select
+                class="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                style="background:var(--bg3);border:1px solid var(--border);color:var(--text)"
                 [(ngModel)]="banReason"
-              ></textarea>
+              >
+                <option value="" disabled>Seleziona un motivo</option>
+                @for (reason of banReasonOptions(); track reason) {
+                  <option [value]="reason">{{ reason }}</option>
+                }
+              </select>
             </label>
             <div class="flex gap-2 pt-2">
               <button (click)="submitBan()" class="btn-danger flex-1">Conferma ban</button>
-              <button (click)="closeBan()" class="btn-ghost flex-1 border border-gray-200">Annulla</button>
+              <button (click)="closeBan()" class="btn-ghost flex-1" style="border:1px solid var(--border)">Annulla</button>
             </div>
           </div>
         </div>
@@ -233,6 +245,7 @@ export class AbuseModerationComponent implements OnInit {
 
   banSeverity: CommunityBanSeverity = 'light';
   banReason = '';
+  readonly banReasonOptions = signal<string[]>(banReasonsFor('light'));
 
   readonly tabs: { value: AbuseReportStatus; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
@@ -456,8 +469,18 @@ export class AbuseModerationComponent implements OnInit {
 
   openBan(userId: string, label: string): void {
     this.banSeverity = 'light';
+    this.banReasonOptions.set(banReasonsFor('light'));
     this.banReason = '';
     this.banDialog.set({ userId, label });
+  }
+
+  onBanSeverityChange(value: CommunityBanSeverity): void {
+    this.banSeverity = value;
+    const options = banReasonsFor(value);
+    this.banReasonOptions.set(options);
+    if (!options.includes(this.banReason)) {
+      this.banReason = '';
+    }
   }
 
   closeBan(): void {
@@ -467,12 +490,17 @@ export class AbuseModerationComponent implements OnInit {
   submitBan(): void {
     const dialog = this.banDialog();
     if (!dialog) return;
+    const reason = this.banReason.trim();
+    if (!reason) {
+      this.toast.error('Seleziona un motivo');
+      return;
+    }
     this.loadingSvc.show();
     this.api
       .createCommunityBan({
         user_id: dialog.userId,
         severity: this.banSeverity,
-        reason: this.banReason.trim() || null,
+        reason,
       })
       .subscribe({
         next: () => {

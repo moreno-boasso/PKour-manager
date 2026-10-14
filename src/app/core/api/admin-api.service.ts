@@ -10,6 +10,7 @@ import {
   AdminJam,
   AdminSpot,
   AdminSpotDetail,
+  AdminUserSearchHit,
   CommunityBan,
   CommunityBanSeverity,
   CommunityItemStatus,
@@ -357,6 +358,16 @@ export class AdminApiService {
     );
   }
 
+  searchUsers(q: string, limit = 20): Observable<{ data: AdminUserSearchHit[] }> {
+    const params = new HttpParams()
+      .set('q', q)
+      .set('limit', String(limit));
+    return this.http.get<{ data: AdminUserSearchHit[] }>(
+      `${this.base}/api/manager/users/search`,
+      { params }
+    );
+  }
+
   getCommunityBans(
     limit: number,
     offset: number,
@@ -382,7 +393,7 @@ export class AdminApiService {
   createCommunityBan(body: {
     user_id: string;
     severity: CommunityBanSeverity;
-    reason?: string | null;
+    reason: string;
   }): Observable<CommunityBan> {
     return this.http
       .post<CommunityBan>(`${this.base}/api/manager/community-bans`, body)

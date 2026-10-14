@@ -175,6 +175,13 @@ export interface TopReportedUser {
 
 export type CommunityBanSeverity = 'light' | 'medium' | 'permanent';
 
+export interface AdminUserSearchHit {
+  id: string;
+  username: string | null;
+  nome: string | null;
+  avatar_url: string | null;
+}
+
 export interface CommunityBan {
   id: number;
   user_id: string;
