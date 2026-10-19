@@ -61,6 +61,7 @@ export class DashboardComponent implements OnInit {
     return [
       { label: 'Spot', count: s?.pending_spots ?? 0, icon: '📍', route: '/spots' },
       { label: 'Eventi', count: s?.pending_events ?? 0, icon: '📅', route: '/events' },
+      { label: 'Jam', count: s?.pending_jams ?? 0, icon: '🟡', route: '/jams' },
       { label: 'Recensioni', count: s?.pending_reviews ?? 0, icon: '⭐', route: '/reviews' },
       { label: 'Foto', count: s?.pending_photos ?? 0, icon: '📷', route: '/photos' },
       { label: 'Segnalazioni', count: s?.pending_abuse_reports ?? 0, icon: '🚩', route: '/reports' },

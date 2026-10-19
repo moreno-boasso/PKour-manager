@@ -11,7 +11,7 @@ import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
 import { finalize } from 'rxjs';
 
-type Tab = 'pending' | 'approved';
+type Tab = ModerationStatus;
 type MapView = 'satellite' | 'streetview';
 
 @Component({
@@ -83,7 +83,7 @@ type MapView = 'satellite' | 'streetview';
         <app-empty-state type="spots" message="Nessuno spot in questa categoria" />
       } @else {
         @if (activeTab() === 'pending') {
-          <p class="text-xs text-gray-400 text-center sm:hidden">← Elimina &nbsp;|&nbsp; Approva →</p>
+          <p class="text-xs text-gray-400 text-center sm:hidden">← Rifiuta &nbsp;|&nbsp; Approva →</p>
         }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (spot of spots(); track spot.id) {
@@ -101,7 +101,7 @@ type MapView = 'satellite' | 'streetview';
               }
               @if (swipingId() === spot.id && swipeDir() === 'left') {
                 <div class="absolute inset-0 z-10 bg-red-500/20 flex items-center justify-end pr-6 rounded-xl">
-                  <span class="text-red-600 font-bold text-lg">✕ Elimina</span>
+                  <span class="text-red-600 font-bold text-lg">✕ Rifiuta</span>
                 </div>
               }
               <div class="h-36 bg-gray-100 relative">
@@ -278,6 +278,14 @@ type MapView = 'satellite' | 'streetview';
                 </div>
               }
 
+              <!-- Motivo rifiuto -->
+              @if (d.rejection_reason) {
+                <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-sm">
+                  <p class="font-medium text-red-800 mb-1">Motivo rifiuto</p>
+                  <p class="text-red-700 whitespace-pre-wrap">{{ d.rejection_reason }}</p>
+                </div>
+              }
+
               <!-- Segnalazioni -->
               @if (d.segnalazioni.length > 0) {
                 <div>
@@ -302,12 +310,19 @@ type MapView = 'satellite' | 'streetview';
           <div class="sticky bottom-0 px-5 py-4 flex gap-3 shrink-0" style="background:var(--bg2);border-top:1px solid var(--border)">
             @if (d.status === 'pending') {
               <button (click)="approveDetail()" class="btn-primary flex-1 py-3 text-sm font-semibold">✓ Approva</button>
+              <button (click)="rejectDetail()" class="btn-danger flex-1 py-3 text-sm font-semibold">✕ Rifiuta</button>
             } @else {
-              <div class="flex-1 flex items-center justify-center">
-                <span class="badge-approved text-sm px-4 py-2">✓ Approvato</span>
-              </div>
+              @if (d.status === 'approved') {
+                <div class="flex-1 flex items-center justify-center">
+                  <span class="badge-approved text-sm px-4 py-2">✓ Approvato</span>
+                </div>
+              } @else {
+                <div class="flex-1 flex items-center justify-center">
+                  <span class="badge-pending text-sm px-4 py-2">✕ Rifiutato</span>
+                </div>
+              }
+              <button (click)="hardDeleteDetail()" class="btn-danger flex-1 py-3 text-sm font-semibold">✕ Elimina</button>
             }
-            <button (click)="rejectDetail()" class="btn-danger flex-1 py-3 text-sm font-semibold">✕ Elimina</button>
           </div>
         </div>
       </div>
@@ -372,6 +387,7 @@ export class SpotsModerationComponent implements OnInit {
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvati' },
+    { value: 'rejected', label: 'Rifiutati' },
   ];
 
   ngOnInit(): void {
@@ -460,6 +476,29 @@ export class SpotsModerationComponent implements OnInit {
 
   rejectDetail(): void {
     const d = this.selectedDetail();
+    if (!d) return;
+    const reason = prompt(`Motivo del rifiuto per "${d.nome}":`)?.trim();
+    if (!reason) {
+      if (reason !== undefined) this.toast.error('Motivo obbligatorio');
+      return;
+    }
+    this.loadingSvc.show();
+    this.api.patchSpotStatus(d.id, 'rejected', reason).pipe(
+      finalize(() => this.loadingSvc.hide()),
+    ).subscribe({
+      next: () => {
+        this.toast.success(`"${d.nome}" rifiutato`);
+        this.selectedDetail.update((detail) =>
+          detail ? { ...detail, status: 'rejected', rejection_reason: reason } : null
+        );
+        this.load();
+      },
+      error: () => this.toast.error('Errore rifiuto'),
+    });
+  }
+
+  hardDeleteDetail(): void {
+    const d = this.selectedDetail();
     if (!d || !confirm(`Eliminare definitivamente "${d.nome}"?\n\nQuesta azione non può essere annullata.`)) return;
     this.loadingSvc.show();
     this.api.deleteSpot(d.id).pipe(
@@ -482,19 +521,24 @@ export class SpotsModerationComponent implements OnInit {
   }
 
   onSwipeLeft(spot: AdminSpot): void {
+    const reason = prompt(`Motivo del rifiuto per "${spot.nome}":`)?.trim();
+    if (!reason) {
+      if (reason !== undefined) this.toast.error('Motivo obbligatorio');
+      return;
+    }
     this.swipingId.set(spot.id); this.swipeDir.set('left');
     setTimeout(() => {
       this.swipingId.set(null); this.swipeDir.set(null);
-      this.api.deleteSpot(spot.id).subscribe({
-        next: () => { this.toast.success(`"${spot.nome}" eliminato`); this.load(); },
-        error: () => this.toast.error('Errore eliminazione'),
+      this.api.patchSpotStatus(spot.id, 'rejected', reason).subscribe({
+        next: () => { this.toast.success(`"${spot.nome}" rifiutato`); this.load(); },
+        error: () => this.toast.error('Errore rifiuto'),
       });
     }, 350);
   }
 
   badgeClass(status: ModerationStatus): string {
     const base = 'text-xs font-semibold px-2 py-0.5 rounded-full';
-    if (status === 'pending') return `${base} badge-pending`;
+    if (status === 'pending' || status === 'rejected') return `${base} badge-pending`;
     return `${base} badge-approved`;
   }
 }

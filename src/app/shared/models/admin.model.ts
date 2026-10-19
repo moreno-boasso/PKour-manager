@@ -1,5 +1,5 @@
-export type ModerationStatus = 'pending' | 'approved';
-export type CommunityItemStatus = 'pending' | 'approved' | 'ended';
+export type ModerationStatus = 'pending' | 'approved' | 'rejected';
+export type CommunityItemStatus = 'pending' | 'approved' | 'ended' | 'rejected';
 
 export interface AdminUser {
   userId: string;
@@ -22,6 +22,7 @@ export interface AdminSpot {
   nome: string;
   posizione: { lat: number; lon: number };
   status: ModerationStatus;
+  rejection_reason?: string | null;
   tipo: string | null;
   foto_principale_url: string | null;
 }
@@ -33,6 +34,7 @@ export interface AdminSpotDetail {
   descrizione: string | null;
   tipo: string | null;
   status: ModerationStatus;
+  rejection_reason?: string | null;
   features: string[];
   visitatori_count: number;
   foto: SpotPhoto[];
@@ -127,6 +129,7 @@ export interface ManagerStats {
   pending_photos: number;
   pending_reports: number;
   pending_events: number;
+  pending_jams?: number;
   pending_abuse_reports: number;
 }
 
@@ -213,6 +216,7 @@ export interface AdminEvent {
   starts_at: string;
   ends_at: string;
   status: CommunityItemStatus;
+  rejection_reason?: string | null;
   link_evento: string | null;
   banner_url: string | null;
   contatto: string | null;
@@ -233,7 +237,8 @@ export interface AdminJam {
   note: string | null;
   starts_at: string;
   ends_at: string;
-  status: string;
+  status: CommunityItemStatus;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at?: string;
   creator: AdminCommunityCreator;

@@ -85,7 +85,7 @@ type Tab = CommunityItemStatus;
                     <button (click)="approve(event)" class="btn-primary py-1 px-3 text-xs justify-center">Approva</button>
                     <button (click)="reject(event)" class="btn-danger py-1 px-3 text-xs justify-center">Rifiuta</button>
                   } @else {
-                    <button (click)="reject(event)" class="btn-danger py-1 px-3 text-xs justify-center">Elimina</button>
+                    <button (click)="hardDelete(event)" class="btn-danger py-1 px-3 text-xs justify-center">Elimina</button>
                   }
                 </div>
               </div>
@@ -135,6 +135,12 @@ type Tab = CommunityItemStatus;
                     {{ e.costo_label || (e.costo_amount + ' ' + (e.costo_currency || 'EUR')) }}
                   </p>
                 }
+                @if (e.rejection_reason) {
+                  <div class="bg-red-50 border border-red-100 rounded-lg p-3">
+                    <p class="font-medium mb-1 text-red-800">Motivo rifiuto</p>
+                    <p class="whitespace-pre-wrap text-red-700">{{ e.rejection_reason }}</p>
+                  </div>
+                }
                 @if (e.note) {
                   <div class="bg-gray-50 rounded-lg p-3">
                     <p class="font-medium mb-1">Note</p>
@@ -161,7 +167,7 @@ type Tab = CommunityItemStatus;
                   <button (click)="approveDetail()" class="btn-primary flex-1">Approva</button>
                   <button (click)="rejectDetail()" class="btn-danger flex-1">Rifiuta</button>
                 } @else {
-                  <button (click)="rejectDetail()" class="btn-danger flex-1">Elimina</button>
+                  <button (click)="hardDeleteDetail()" class="btn-danger flex-1">Elimina</button>
                 }
               </div>
             </div>
@@ -190,6 +196,7 @@ export class EventsModerationComponent implements OnInit {
   readonly tabs: { value: Tab; label: string }[] = [
     { value: 'pending', label: 'In attesa' },
     { value: 'approved', label: 'Approvati' },
+    { value: 'rejected', label: 'Rifiutati' },
     { value: 'ended', label: 'Terminati' },
   ];
 
@@ -210,12 +217,15 @@ export class EventsModerationComponent implements OnInit {
         return 'In attesa';
       case 'approved':
         return 'Approvato';
+      case 'rejected':
+        return 'Rifiutato';
       case 'ended':
         return 'Terminato';
     }
   }
 
   statusBadge(status: CommunityItemStatus): string {
+    if (status === 'rejected') return 'badge-pending';
     if (status === 'pending') return 'badge-pending';
     if (status === 'approved') return 'badge-approved';
     return 'text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600';
@@ -312,12 +322,31 @@ export class EventsModerationComponent implements OnInit {
   }
 
   reject(event: AdminEvent): void {
-    const label = event.status === 'pending' ? 'rifiutare' : 'eliminare';
-    if (!confirm(`Confermi di ${label} "${event.nome}"?`)) return;
+    const reason = prompt(`Motivo del rifiuto per "${event.nome}":`)?.trim();
+    if (!reason) {
+      if (reason !== undefined) this.toast.error('Motivo obbligatorio');
+      return;
+    }
+    this.loadingSvc.show();
+    this.api.rejectEvent(event.id, reason).subscribe({
+      next: () => {
+        this.toast.success('Evento rifiutato');
+        this.loadingSvc.hide();
+        this.load();
+      },
+      error: () => {
+        this.toast.error('Errore rifiuto');
+        this.loadingSvc.hide();
+      },
+    });
+  }
+
+  hardDelete(event: AdminEvent): void {
+    if (!confirm(`Eliminare definitivamente "${event.nome}"?`)) return;
     this.loadingSvc.show();
     this.api.deleteEvent(event.id).subscribe({
       next: () => {
-        this.toast.success(event.status === 'pending' ? 'Evento rifiutato' : 'Evento eliminato');
+        this.toast.success('Evento eliminato');
         this.loadingSvc.hide();
         this.load();
       },
@@ -339,6 +368,13 @@ export class EventsModerationComponent implements OnInit {
     const e = this.selected();
     if (!e) return;
     this.reject(e);
+    this.closeDetail();
+  }
+
+  hardDeleteDetail(): void {
+    const e = this.selected();
+    if (!e) return;
+    this.hardDelete(e);
     this.closeDetail();
   }
 }

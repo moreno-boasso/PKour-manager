@@ -186,8 +186,16 @@ export class AdminApiService {
     );
   }
 
-  patchSpotStatus(id: number, status: ModerationStatus): Observable<AdminSpotDetail> {
-    return this.http.patch<AdminSpotDetail>(`${this.base}/api/admin/spots/${id}/status`, { status }).pipe(
+  patchSpotStatus(
+    id: number,
+    status: ModerationStatus,
+    rejectionReason?: string
+  ): Observable<AdminSpotDetail> {
+    const body: { status: ModerationStatus; rejection_reason?: string } = { status };
+    if (status === 'rejected' && rejectionReason) {
+      body.rejection_reason = rejectionReason;
+    }
+    return this.http.patch<AdminSpotDetail>(`${this.base}/api/admin/spots/${id}/status`, body).pipe(
       tap(() => {
         this.cache.invalidate(`spot-detail-${id}`);
         this.cache.invalidate('spots-');
@@ -250,6 +258,21 @@ export class AdminApiService {
       );
   }
 
+  rejectEvent(id: number, rejectionReason: string): Observable<unknown> {
+    return this.http
+      .patch(`${this.base}/api/manager/events/${id}/status`, {
+        status: 'rejected',
+        rejection_reason: rejectionReason,
+      })
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('events-');
+          this.cache.invalidate(`event-detail-${id}`);
+          this.cache.invalidate('stats');
+        })
+      );
+  }
+
   deleteEvent(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/api/manager/events/${id}`).pipe(
       tap(() => {
@@ -261,13 +284,17 @@ export class AdminApiService {
   }
 
   getJams(
+    status: CommunityItemStatus,
     limit: number,
     offset: number,
     q?: string
   ): Observable<PaginatedResponse<AdminJam>> {
-    let params = new HttpParams().set('limit', limit).set('offset', offset);
+    let params = new HttpParams()
+      .set('status', status)
+      .set('limit', limit)
+      .set('offset', offset);
     if (q) params = params.set('q', q);
-    const cacheKey = `jams-${limit}-${offset}-${q || ''}`;
+    const cacheKey = `jams-${status}-${limit}-${offset}-${q || ''}`;
     return this.cache.wrap(
       cacheKey,
       this.http.get<PaginatedResponse<AdminJam>>(
@@ -286,11 +313,41 @@ export class AdminApiService {
     );
   }
 
+  approveJam(id: number): Observable<unknown> {
+    return this.http
+      .patch(`${this.base}/api/manager/jams/${id}/status`, {
+        status: 'approved',
+      })
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('jams-');
+          this.cache.invalidate(`jam-detail-${id}`);
+          this.cache.invalidate('stats');
+        })
+      );
+  }
+
+  rejectJam(id: number, rejectionReason: string): Observable<unknown> {
+    return this.http
+      .patch(`${this.base}/api/manager/jams/${id}/status`, {
+        status: 'rejected',
+        rejection_reason: rejectionReason,
+      })
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('jams-');
+          this.cache.invalidate(`jam-detail-${id}`);
+          this.cache.invalidate('stats');
+        })
+      );
+  }
+
   deleteJam(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/api/manager/jams/${id}`).pipe(
       tap(() => {
         this.cache.invalidate('jams-');
         this.cache.invalidate(`jam-detail-${id}`);
+        this.cache.invalidate('stats');
       })
     );
   }

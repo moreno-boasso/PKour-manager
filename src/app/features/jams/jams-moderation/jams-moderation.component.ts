@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApiService } from '../../../core/api/admin-api.service';
-import { AdminJam } from '../../../shared/models/admin.model';
+import { AdminJam, CommunityItemStatus } from '../../../shared/models/admin.model';
 import { ToastService } from '../../../core/ui/toast.service';
 import { LoadingService } from '../../../core/ui/loading.service';
+
+type Tab = CommunityItemStatus;
 
 @Component({
   selector: 'app-jams-moderation',
@@ -14,10 +16,21 @@ import { LoadingService } from '../../../core/ui/loading.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="p-6 space-y-6">
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Jam</h1>
-          <p class="text-sm text-gray-500 mt-1">{{ total() }} jam live</p>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Moderazione Jam</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ total() }} jam trovate</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+          @for (tab of tabs; track tab.value) {
+            <button
+              (click)="setTab(tab.value)"
+              [class]="activeTab() === tab.value
+                ? 'px-4 py-1.5 rounded-md bg-white shadow-sm text-sm font-medium text-gray-900'
+                : 'px-4 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-700'"
+            >{{ tab.label }}</button>
+          }
         </div>
         <input
           type="search"
@@ -39,15 +52,21 @@ import { LoadingService } from '../../../core/ui/loading.service';
         </div>
       } @else if (jams().length === 0) {
         <div class="card p-8 text-center text-sm text-gray-500">
-          Nessuna jam live
+          Nessuna jam in questa categoria
         </div>
       } @else {
         <div class="space-y-3">
           @for (jam of jams(); track jam.id) {
             <div class="card p-4 cursor-pointer hover:bg-gray-50" (click)="openDetail(jam)">
-              <div class="flex items-start justify-between gap-4">
+              <div class="flex items-start gap-4">
+                <div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-gray-100 flex items-center justify-center text-xl">
+                  🟡
+                </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-sm text-gray-900 truncate">{{ jam.nome }}</p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold text-sm text-gray-900 truncate">{{ jam.nome }}</span>
+                    <span [class]="statusBadge(jam.status)">{{ statusLabel(jam.status) }}</span>
+                  </div>
                   <p class="text-xs text-gray-500 mt-1">
                     {{ jam.creator.username ?? jam.creator.nome ?? jam.creator.id }}
                     · {{ jam.starts_at | date:'dd/MM/yyyy HH:mm' }}
@@ -57,10 +76,14 @@ import { LoadingService } from '../../../core/ui/loading.service';
                     <p class="text-xs text-gray-400 mt-0.5 truncate">{{ jam.location_primary?.nome }}</p>
                   }
                 </div>
-                <button
-                  (click)="deleteJam(jam); $event.stopPropagation()"
-                  class="btn-danger py-1 px-3 text-xs justify-center shrink-0"
-                >Elimina</button>
+                <div class="flex flex-col gap-1.5 shrink-0" (click)="$event.stopPropagation()">
+                  @if (jam.status === 'pending') {
+                    <button (click)="approve(jam)" class="btn-primary py-1 px-3 text-xs justify-center">Approva</button>
+                    <button (click)="reject(jam)" class="btn-danger py-1 px-3 text-xs justify-center">Rifiuta</button>
+                  } @else {
+                    <button (click)="hardDelete(jam)" class="btn-danger py-1 px-3 text-xs justify-center">Elimina</button>
+                  }
+                </div>
               </div>
             </div>
           }
@@ -82,7 +105,7 @@ import { LoadingService } from '../../../core/ui/loading.service';
               <div class="flex items-start justify-between">
                 <div>
                   <h2 class="text-lg font-bold text-gray-900">{{ jam.nome }}</h2>
-                  <p class="text-sm text-gray-500">Jam live</p>
+                  <p class="text-sm text-gray-500">{{ statusLabel(jam.status) }}</p>
                 </div>
                 <button (click)="closeDetail()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
               </div>
@@ -92,6 +115,12 @@ import { LoadingService } from '../../../core/ui/loading.service';
                 <p><span class="font-medium">Inizio:</span> {{ jam.starts_at | date:'dd/MM/yyyy HH:mm' }}</p>
                 <p><span class="font-medium">Fine:</span> {{ jam.ends_at | date:'dd/MM/yyyy HH:mm' }}</p>
                 <p><span class="font-medium">Partecipanti:</span> {{ jam.participants_count }}</p>
+                @if (jam.rejection_reason) {
+                  <div class="bg-red-50 border border-red-100 rounded-lg p-3">
+                    <p class="font-medium mb-1 text-red-800">Motivo rifiuto</p>
+                    <p class="whitespace-pre-wrap text-red-700">{{ jam.rejection_reason }}</p>
+                  </div>
+                }
                 @if (jam.note) {
                   <div class="bg-gray-50 rounded-lg p-3">
                     <p class="font-medium mb-1">Note</p>
@@ -113,7 +142,14 @@ import { LoadingService } from '../../../core/ui/loading.service';
                 }
               </div>
 
-              <button (click)="deleteDetail()" class="btn-danger w-full">Elimina jam</button>
+              <div class="flex gap-2 pt-2">
+                @if (jam.status === 'pending') {
+                  <button (click)="approveDetail()" class="btn-primary flex-1">Approva</button>
+                  <button (click)="rejectDetail()" class="btn-danger flex-1">Rifiuta</button>
+                } @else {
+                  <button (click)="hardDeleteDetail()" class="btn-danger flex-1">Elimina</button>
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -132,9 +168,17 @@ export class JamsModerationComponent implements OnInit {
   readonly jams = signal<AdminJam[]>([]);
   readonly total = signal(0);
   readonly offset = signal(0);
+  readonly activeTab = signal<Tab>('pending');
   readonly search = signal('');
   readonly selected = signal<AdminJam | null>(null);
   readonly pageSize = 20;
+
+  readonly tabs: { value: Tab; label: string }[] = [
+    { value: 'pending', label: 'In attesa' },
+    { value: 'approved', label: 'Approvate' },
+    { value: 'rejected', label: 'Rifiutate' },
+    { value: 'ended', label: 'Terminate' },
+  ];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -147,10 +191,30 @@ export class JamsModerationComponent implements OnInit {
     }
   }
 
+  statusLabel(status: CommunityItemStatus): string {
+    switch (status) {
+      case 'pending':
+        return 'In attesa';
+      case 'approved':
+        return 'Approvata';
+      case 'rejected':
+        return 'Rifiutata';
+      case 'ended':
+        return 'Terminata';
+    }
+  }
+
+  statusBadge(status: CommunityItemStatus): string {
+    if (status === 'rejected') return 'badge-pending';
+    if (status === 'pending') return 'badge-pending';
+    if (status === 'approved') return 'badge-approved';
+    return 'text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600';
+  }
+
   load(): void {
     this.loading.set(true);
     const q = this.search().trim() || undefined;
-    this.api.getJams(this.pageSize, this.offset(), q).subscribe({
+    this.api.getJams(this.activeTab(), this.pageSize, this.offset(), q).subscribe({
       next: (res) => {
         this.jams.set(res.data);
         this.total.set(res.pagination.total);
@@ -161,6 +225,12 @@ export class JamsModerationComponent implements OnInit {
         this.toast.error('Errore nel caricamento jam');
       },
     });
+  }
+
+  setTab(tab: Tab): void {
+    this.activeTab.set(tab);
+    this.offset.set(0);
+    this.load();
   }
 
   onSearch(value: string): void {
@@ -216,8 +286,43 @@ export class JamsModerationComponent implements OnInit {
     }
   }
 
-  deleteJam(jam: AdminJam): void {
-    if (!confirm(`Eliminare la jam "${jam.nome}"?`)) return;
+  approve(jam: AdminJam): void {
+    this.loadingSvc.show();
+    this.api.approveJam(jam.id).subscribe({
+      next: () => {
+        this.toast.success('Jam approvata');
+        this.loadingSvc.hide();
+        this.load();
+      },
+      error: () => {
+        this.toast.error('Errore approvazione');
+        this.loadingSvc.hide();
+      },
+    });
+  }
+
+  reject(jam: AdminJam): void {
+    const reason = prompt(`Motivo del rifiuto per "${jam.nome}":`)?.trim();
+    if (!reason) {
+      if (reason !== undefined) this.toast.error('Motivo obbligatorio');
+      return;
+    }
+    this.loadingSvc.show();
+    this.api.rejectJam(jam.id, reason).subscribe({
+      next: () => {
+        this.toast.success('Jam rifiutata');
+        this.loadingSvc.hide();
+        this.load();
+      },
+      error: () => {
+        this.toast.error('Errore rifiuto');
+        this.loadingSvc.hide();
+      },
+    });
+  }
+
+  hardDelete(jam: AdminJam): void {
+    if (!confirm(`Eliminare definitivamente "${jam.nome}"?`)) return;
     this.loadingSvc.show();
     this.api.deleteJam(jam.id).subscribe({
       next: () => {
@@ -232,10 +337,24 @@ export class JamsModerationComponent implements OnInit {
     });
   }
 
-  deleteDetail(): void {
+  approveDetail(): void {
     const jam = this.selected();
     if (!jam) return;
-    this.deleteJam(jam);
+    this.approve(jam);
+    this.closeDetail();
+  }
+
+  rejectDetail(): void {
+    const jam = this.selected();
+    if (!jam) return;
+    this.reject(jam);
+    this.closeDetail();
+  }
+
+  hardDeleteDetail(): void {
+    const jam = this.selected();
+    if (!jam) return;
+    this.hardDelete(jam);
     this.closeDetail();
   }
 }
