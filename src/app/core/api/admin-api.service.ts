@@ -11,6 +11,8 @@ import {
   AdminSpot,
   AdminSpotDetail,
   AdminUserSearchHit,
+  BugReport,
+  BugReportArea,
   CommunityBan,
   CommunityBanSeverity,
   CommunityItemStatus,
@@ -399,6 +401,39 @@ export class AdminApiService {
           this.cache.invalidate('abuse-');
           this.cache.invalidate('stats');
           this.cache.invalidate('top-reported-users');
+        })
+      );
+  }
+
+  getBugReports(
+    limit: number,
+    offset: number,
+    area?: BugReportArea | '',
+    q?: string
+  ): Observable<PaginatedResponse<BugReport>> {
+    let params = new HttpParams()
+      .set('limit', limit)
+      .set('offset', offset);
+    if (area) params = params.set('area', area);
+    if (q) params = params.set('q', q);
+    const cacheKey = `bug-reports-${limit}-${offset}-${area || 'all'}-${q || ''}`;
+    return this.cache.wrap(
+      cacheKey,
+      this.http.get<PaginatedResponse<BugReport>>(
+        `${this.base}/api/manager/bug-reports`,
+        { params }
+      ),
+      this.CACHE_TTL
+    );
+  }
+
+  resolveBugReport(id: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.base}/api/manager/bug-reports/${id}`)
+      .pipe(
+        tap(() => {
+          this.cache.invalidate('bug-reports-');
+          this.cache.invalidate('stats');
         })
       );
   }

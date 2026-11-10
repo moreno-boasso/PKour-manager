@@ -131,6 +131,38 @@ export interface ManagerStats {
   pending_events: number;
   pending_jams?: number;
   pending_abuse_reports: number;
+  open_bug_reports?: number;
+}
+
+export type BugReportArea =
+  | 'add_spot'
+  | 'auth'
+  | 'home'
+  | 'profile'
+  | 'settings'
+  | 'spots'
+  | 'spot_detail'
+  | 'trick_attempts'
+  | 'trick_detail'
+  | 'tricks'
+  | 'generic';
+
+export interface BugReport {
+  id: number;
+  message: string;
+  area: BugReportArea | string;
+  device_info: string;
+  app_version: string;
+  reporter_name: string;
+  reporter_user_id: string | null;
+  reporter: {
+    id: string | null;
+    username: string | null;
+    nome: string | null;
+    avatar_url: string | null;
+  };
+  status: 'open' | 'resolved' | string;
+  created_at: string;
 }
 
 export interface AdminCommunityCreator {

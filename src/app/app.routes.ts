@@ -67,6 +67,13 @@ export const routes: Routes = [
             (m) => m.CommunityBansComponent
           ),
       },
+      {
+        path: 'bugs',
+        loadComponent: () =>
+          import('./features/bugs/bugs-moderation/bugs-moderation.component').then(
+            (m) => m.BugsModerationComponent
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
