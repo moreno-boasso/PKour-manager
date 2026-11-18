@@ -19,13 +19,18 @@ export class TricksApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBaseUrl;
 
-  getTricks(limit: number, offset: number, q?: string, difficolta?: string, tag?: string): Observable<PaginatedResponse<Trick>> {
+  getTricks(
+    limit: number,
+    offset: number,
+    q?: string,
+    difficolta?: string,
+    opts?: { lowUtilita?: boolean },
+  ): Observable<PaginatedResponse<Trick>> {
     let params = new HttpParams().set('limit', limit).set('offset', offset);
     if (q) params = params.set('q', q);
     if (difficolta) params = params.set('difficolta', difficolta);
-    if (tag) params = params.set('tag', tag);
-    const url = q ? `${this.base}/api/tricks/search` : `${this.base}/api/tricks`;
-    return this.http.get<PaginatedResponse<Trick>>(url, { params });
+    if (opts?.lowUtilita) params = params.set('low_utilita', '1');
+    return this.http.get<PaginatedResponse<Trick>>(`${this.base}/api/manager/tricks`, { params });
   }
 
   patchTrick(id: string, data: Partial<Trick>): Observable<Trick> {

@@ -82,6 +82,15 @@ export interface Trick {
   thumbnail_url: string | null;
   tags: string[];
   required: string[];
+  /** Media utilità tutorial (1–5), da TrickRating */
+  utilita_tutorial_avg?: number | null;
+  /** Media difficoltà percepita (1–5) */
+  difficolta_percepita_avg?: number | null;
+  rating_count?: number;
+  /** true se utilita_tutorial_avg ≤ 3 con almeno 1 voto */
+  low_utilita?: boolean;
+  /** valorizzato solo dopo PATCH manager */
+  ratings_cleared?: number;
 }
 
 export interface ManagerReview {

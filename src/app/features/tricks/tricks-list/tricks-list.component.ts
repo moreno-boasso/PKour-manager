@@ -91,7 +91,7 @@ interface CreateForm extends EditForm {
       }
 
       <!-- Filtri -->
-      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
         <input
           type="text"
           [(ngModel)]="searchQuery"
@@ -102,7 +102,7 @@ interface CreateForm extends EditForm {
         />
         <select
           [(ngModel)]="filterDifficolta"
-          (change)="load()"
+          (change)="onFilterChange()"
           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary outline-none w-full sm:w-auto"
         >
           <option value="" i18n="@@tricks.all_levels">Tutti i livelli</option>
@@ -110,6 +110,15 @@ interface CreateForm extends EditForm {
           <option value="intermedio">Intermedio</option>
           <option value="avanzato">Avanzato</option>
         </select>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700 select-none cursor-pointer">
+          <input
+            type="checkbox"
+            [(ngModel)]="filterLowUtilita"
+            (change)="onFilterChange()"
+            class="rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          Solo rating ≤ 3 ★
+        </label>
       </div>
 
       <!-- Skeleton -->
@@ -130,17 +139,41 @@ interface CreateForm extends EditForm {
       } @else {
         <div class="space-y-2">
           @for (trick of tricks(); track trick.id) {
-            <div class="card overflow-hidden">
+            <div
+              class="card overflow-hidden"
+              [class.ring-1]="trick.low_utilita"
+              [style.box-shadow]="trick.low_utilita ? 'inset 3px 0 0 0 #dc2626' : null"
+            >
               <!-- Riga principale -->
               <div class="p-3 sm:p-4 flex gap-3">
                 @if (trick.thumbnail_url) {
                   <img [src]="trick.thumbnail_url" [alt]="trick.nome" class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" style="background:var(--bg3)" />
                 } @else {
-                  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center text-2xl shrink-0" style="background:var(--bg3)">�</div>
+                  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg flex items-center justify-center text-2xl shrink-0" style="background:var(--bg3)">🛹</div>
                 }
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">{{ trick.nome }}</p>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">{{ trick.nome }}</p>
+                    @if (trick.low_utilita) {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700">
+                        Rating basso
+                      </span>
+                    }
+                  </div>
                   <p class="text-xs text-gray-500 mt-0.5">{{ trick.difficolta }}</p>
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
+                    @if ((trick.rating_count ?? 0) > 0) {
+                      <span [class]="trick.low_utilita ? 'text-red-700 font-medium' : 'text-gray-700'">
+                        Utilità tutorial: {{ formatAvg(trick.utilita_tutorial_avg) }} ★
+                        <span class="text-gray-400 font-normal">({{ trick.rating_count }})</span>
+                      </span>
+                      <span class="text-gray-500">
+                        Diff. percepita: {{ formatAvg(trick.difficolta_percepita_avg) }} ★
+                      </span>
+                    } @else {
+                      <span class="text-gray-400">Nessuna valutazione</span>
+                    }
+                  </div>
                   @if (trick.tags.length > 0) {
                     <div class="flex flex-wrap gap-1 mt-1.5">
                       @for (tag of trick.tags.slice(0, 3); track tag) {
@@ -169,6 +202,11 @@ interface CreateForm extends EditForm {
               <!-- Form edit inline -->
               @if (editingId() === trick.id && editForm) {
                 <div class="border-t border-gray-100 bg-gray-50 p-4 space-y-4">
+                  @if ((trick.rating_count ?? 0) > 0) {
+                    <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Salvando le modifiche, le {{ trick.rating_count }} valutazioni community verranno azzerate.
+                    </p>
+                  }
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Nome -->
                     <div>
@@ -257,6 +295,7 @@ export class TricksListComponent implements OnInit {
 
   searchQuery = '';
   filterDifficolta = '';
+  filterLowUtilita = false;
   editForm: EditForm | null = null;
   createForm: CreateForm | null = null;
 
@@ -266,14 +305,32 @@ export class TricksListComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.api.getTricks(this.pageSize, this.offset(), this.searchQuery || undefined, this.filterDifficolta || undefined).subscribe({
-      next: (res) => {
-        this.tricks.set(res.data);
-        this.total.set(res.pagination.total);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .getTricks(
+        this.pageSize,
+        this.offset(),
+        this.searchQuery || undefined,
+        this.filterDifficolta || undefined,
+        { lowUtilita: this.filterLowUtilita },
+      )
+      .subscribe({
+        next: (res) => {
+          this.tricks.set(res.data);
+          this.total.set(res.pagination.total);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  formatAvg(value: number | null | undefined): string {
+    if (value == null || Number.isNaN(Number(value))) return '—';
+    return Number(value).toFixed(1);
+  }
+
+  onFilterChange(): void {
+    this.offset.set(0);
+    this.load();
   }
 
   search(): void {
@@ -392,10 +449,15 @@ export class TricksListComponent implements OnInit {
     };
 
     this.api.patchTrick(trick.id, payload).subscribe({
-      next: () => {
+      next: (updated) => {
         this.saving.set(false);
         this.loadingSvc.hide();
-        this.toast.success(`"${trick.nome}" aggiornato`);
+        const cleared = updated.ratings_cleared ?? 0;
+        this.toast.success(
+          cleared > 0
+            ? `"${trick.nome}" aggiornato — ${cleared} valutazioni azzerate`
+            : `"${trick.nome}" aggiornato`,
+        );
         this.cancelEdit();
         this.load();
       },
