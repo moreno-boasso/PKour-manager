@@ -73,11 +73,29 @@ type Tab = CommunityItemStatus;
                   </div>
                   <p class="text-xs text-gray-500 mt-1">
                     {{ event.creator.username ?? event.creator.nome ?? event.creator.id }}
-                    · {{ event.starts_at | date:'dd/MM/yyyy HH:mm' }}
+                    · {{ event.starts_at | date:'dd/MM HH:mm' }}
+                    → {{ event.ends_at | date:'dd/MM HH:mm' }}
                     · {{ event.interested_count }} interessati
                   </p>
-                  @if (event.location_primary?.nome) {
-                    <p class="text-xs text-gray-400 mt-0.5 truncate">{{ event.location_primary?.nome }}</p>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    @if (event.category) {
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-100">
+                        {{ categoryLabel(event.category) }}
+                      </span>
+                    }
+                    @if (event.costo_label || event.costo_amount != null) {
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                        {{ costLabel(event) }}
+                      </span>
+                    }
+                  </div>
+                  @if (event.location_primary?.nome || event.location_primary?.spot_id) {
+                    <p class="text-xs text-gray-400 mt-0.5 truncate">
+                      {{ event.location_primary?.nome || 'Luogo' }}
+                      @if (event.location_primary?.spot_id) {
+                        · spot #{{ event.location_primary?.spot_id }}
+                      }
+                    </p>
                   }
                 </div>
                 <div class="flex flex-col gap-1.5 shrink-0" (click)="$event.stopPropagation()">
@@ -120,6 +138,9 @@ type Tab = CommunityItemStatus;
 
               <div class="space-y-2 text-sm">
                 <p><span class="font-medium">Creator:</span> {{ e.creator.username ?? e.creator.nome ?? e.creator.id }}</p>
+                @if (e.category) {
+                  <p><span class="font-medium">Categoria:</span> {{ categoryLabel(e.category) }}</p>
+                }
                 <p><span class="font-medium">Inizio:</span> {{ e.starts_at | date:'dd/MM/yyyy HH:mm' }}</p>
                 <p><span class="font-medium">Fine:</span> {{ e.ends_at | date:'dd/MM/yyyy HH:mm' }}</p>
                 <p><span class="font-medium">Interessati:</span> {{ e.interested_count }}</p>
@@ -132,7 +153,7 @@ type Tab = CommunityItemStatus;
                 @if (e.costo_label || e.costo_amount != null) {
                   <p>
                     <span class="font-medium">Costo:</span>
-                    {{ e.costo_label || (e.costo_amount + ' ' + (e.costo_currency || 'EUR')) }}
+                    {{ costLabel(e) }}
                   </p>
                 }
                 @if (e.rejection_reason) {
@@ -143,7 +164,7 @@ type Tab = CommunityItemStatus;
                 }
                 @if (e.note) {
                   <div class="bg-gray-50 rounded-lg p-3">
-                    <p class="font-medium mb-1">Note</p>
+                    <p class="font-medium mb-1">Descrizione</p>
                     <p class="whitespace-pre-wrap text-gray-800">{{ e.note }}</p>
                   </div>
                 }
@@ -154,6 +175,7 @@ type Tab = CommunityItemStatus;
                       @for (loc of e.locations; track loc.id) {
                         <li>
                           {{ loc.nome || (loc.lat | number:'1.4-4') + ', ' + (loc.lon | number:'1.4-4') }}
+                          @if (loc.spot_id) { <span class="text-xs text-teal-700">· spot #{{ loc.spot_id }}</span> }
                           @if (loc.is_primary) { <span class="text-xs text-gray-400">(primary)</span> }
                         </li>
                       }
@@ -222,6 +244,34 @@ export class EventsModerationComponent implements OnInit {
       case 'ended':
         return 'Terminato';
     }
+  }
+
+  categoryLabel(category: string | null | undefined): string {
+    switch ((category ?? '').trim()) {
+      case 'competition':
+        return 'Competizione';
+      case 'training':
+        return 'Allenamento';
+      case 'workshop':
+        return 'Workshop';
+      case 'show':
+        return 'Spettacolo';
+      case 'open_gym':
+        return 'Open gym';
+      default:
+        return category?.trim() || '—';
+    }
+  }
+
+  costLabel(event: AdminEvent): string {
+    if (event.costo_amount != null && event.costo_amount > 0) {
+      const currency = (event.costo_currency || 'EUR').trim() || 'EUR';
+      return `${event.costo_amount} ${currency}`;
+    }
+    const label = (event.costo_label || '').trim().toUpperCase();
+    if (label === 'FREE') return 'Gratis';
+    if (label === 'PAID') return 'A pagamento';
+    return event.costo_label?.trim() || '—';
   }
 
   statusBadge(status: CommunityItemStatus): string {

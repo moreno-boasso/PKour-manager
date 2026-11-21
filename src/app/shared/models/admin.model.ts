@@ -244,11 +244,20 @@ export interface AdminCommunityLocation {
   id: number | null;
   spot_id: number | null;
   nome: string | null;
+  address?: string | null;
   lat: number;
   lon: number;
   is_primary?: boolean;
   sort_order?: number;
 }
+
+/** Optional event category API values. */
+export type AdminEventCategory =
+  | 'competition'
+  | 'training'
+  | 'workshop'
+  | 'show'
+  | 'open_gym';
 
 export interface AdminEvent {
   id: number;
@@ -264,6 +273,7 @@ export interface AdminEvent {
   costo_amount: number | null;
   costo_currency: string | null;
   costo_label: string | null;
+  category?: AdminEventCategory | string | null;
   created_at: string;
   updated_at?: string;
   creator: AdminCommunityCreator;
