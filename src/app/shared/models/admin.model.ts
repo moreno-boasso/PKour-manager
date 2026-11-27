@@ -257,7 +257,8 @@ export type AdminEventCategory =
   | 'training'
   | 'workshop'
   | 'show'
-  | 'open_gym';
+  | 'open_gym'
+  | 'jam';
 
 export interface AdminEvent {
   id: number;

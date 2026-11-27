@@ -258,6 +258,8 @@ export class EventsModerationComponent implements OnInit {
         return 'Spettacolo';
       case 'open_gym':
         return 'Open gym';
+      case 'jam':
+        return 'Jam';
       default:
         return category?.trim() || '—';
     }
